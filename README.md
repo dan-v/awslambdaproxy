@@ -40,7 +40,9 @@ Currently you have to compile the project yourself..
 6. On publicly accessible host, run `awslambdaproxy`. You'll need to ensure AWS access key and secret key environment variables are defined.
 
     ```sh
-    AWS_ACCESS_KEY_ID=XXXXXXXXXXXXXXXXX AWS_SECRET_ACCESS_KEY=YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY+ ./awslambdaproxy -regions us-west-2,us-east-1,us-east-2
+    export AWS_ACCESS_KEY_ID=XXXXXXXXXXXXXXXXX
+    export AWS_SECRET_ACCESS_KEY=YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
+    ./awslambdaproxy -regions us-west-2,us-east-1,us-east-2
     ```
     
 7. Configure your web browser to point at the host running `awslambdaproxy` on port 8080.
@@ -48,7 +50,7 @@ Currently you have to compile the project yourself..
 8. Profit
 
 ## $$ AWS Costs $$
-awslambdaproxy should be able to run mostly on the free tier minus bandiwdth costs. It can run on a tier t2.micro instance and the default configuration 128MB Lambda functions that are created with a constantly running Lambda function should also fall in the free tier usage. The bandwidth is what will cost you money.
+awslambdaproxy should be able to run mostly on the free tier minus bandwidth costs. It can run on a tier t2.micro instance and the default configuration 128MB Lambda functions that are created with a constantly running Lambda function should also fall in the free tier usage. The bandwidth is what will cost you money.
 
 ## Future work
 * Rewrite code to be testable
