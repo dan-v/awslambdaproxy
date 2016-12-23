@@ -33,7 +33,7 @@ Currently you have to compile the project yourself..
   make
   ```
 
-4. You'll find your `awslambdaproxy` binary in the `build` folder…
+4. You'll find your `awslambdaproxy` binary in the `build` folder...
 
 5. Copy `awslambdaproxy` binary to a publicly accessible host. You will need to open ports `8080` and `8081` on this host to the world.
 
@@ -47,12 +47,11 @@ Currently you have to compile the project yourself..
     
 7. Configure your web browser to point at the host running `awslambdaproxy` on port 8080.
 
-8. Profit
-
-## $$ AWS Costs $$
+## AWS costs
 awslambdaproxy should be able to run mostly on the free tier minus bandwidth costs. It can run on a tier t2.micro instance and the default configuration 128MB Lambda functions that are created with a constantly running Lambda function should also fall in the free tier usage. The bandwidth is what will cost you money.
 
 ## Future work
+* Fix connections dropping each time a new tunnel is established
 * Rewrite code to be testable
 * Write tests
-* Fix connections dropping each time a new tunnel is established
+* Add security
