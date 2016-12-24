@@ -23,6 +23,7 @@ Currently you have to compile the project yourself.
   go get github.com/hashicorp/yamux
   go get github.com/pkg/errors
   go get github.com/aws/aws-sdk-go/
+  go get github.com/elazarl/goproxy
   ```
 
 3. Run make to build awslambdaproxy
