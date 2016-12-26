@@ -6,12 +6,9 @@ import (
 	"log"
 )
 
-const (
-	lambdaExecutionFrequency = (time.Second * 10)
-	lambdaExecutionTimeout = int64(15)
-)
+func ServerInit(proxyPort string, tunnelPort string, regions []string, lambdaExecutionFrequency time.Duration) {
+	lambdaExecutionTimeout := int64(lambdaExecutionFrequency.Seconds()) + int64(5)
 
-func ServerInit(proxyPort string, tunnelPort string, regions []string) {
 	log.Println("Setting up Lambda infrastructure")
 	err := setupLambdaInfrastructure(regions, lambdaExecutionTimeout)
 	if err != nil {
