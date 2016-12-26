@@ -1,4 +1,4 @@
-`awslambdaproxy` is an [AWS Lambda](https://aws.amazon.com/lambda/) powered HTTP proxy. This provides a constantly rotating IP address for your web traffic from any region where AWS Lambda is available.
+<b>awslambdaproxy</b> is an [AWS Lambda](https://aws.amazon.com/lambda/) powered HTTP proxy. This provides a constantly rotating IP address for your web traffic from any region where AWS Lambda is available.
 
 ![](/images/overview.gif?raw=true)
 
@@ -51,8 +51,8 @@ The easiest way is to download a pre-built binary from the [GitHub Releases](htt
 3. Configure your web browser (or OS) to use an HTTP proxy at the publicly accessible host running `awslambdaproxy` on port 8080.
 
 ## FAQ
-1. How often will the external IP address change? For each region specified, the IP address will change roughly every 4 hours. This of course is subject to change at any moment as this is not something that is documented for the AWS Lambda service.
-2. How much does this cost? awslambdaproxy should be able to run mostly on the AWS free tier minus bandwidth costs. It can run on a t2.micro instance and the default configuration 128MB Lambda functions that are created with a constantly running Lambda function should also fall in the free tier usage. The bandwidth is what will cost you money. Use at your own risk.
+1. <b>How often will the external IP address change?</b> For each region specified, the IP address will change roughly every 4 hours. This of course is subject to change at any moment as this is not something that is documented for the AWS Lambda service.
+2. <b>How much does this cost?</b> awslambdaproxy should be able to run mostly on the AWS free tier minus bandwidth costs. It can run on a t2.micro instance and the default configuration 128MB Lambda functions that are created with a constantly running Lambda function should also fall in the free tier usage. The bandwidth is what will cost you money. Use at your own risk.
 
 ## Future work
 * Fix connections dropping each time a new tunnel is established
