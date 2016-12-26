@@ -1,0 +1,45 @@
+hash: e30caee6fc37d7f980e1ef92dc978550219380a4909907031b21a7202b1bac5c
+updated: 2016-12-25T21:26:04.276542339-08:00
+imports:
+- name: github.com/aws/aws-sdk-go
+  version: 1e6377549087b490b693300bce2c5e286dc87740
+  subpackages:
+  - aws
+  - aws/awserr
+  - aws/awsutil
+  - aws/client
+  - aws/client/metadata
+  - aws/corehandlers
+  - aws/credentials
+  - aws/credentials/ec2rolecreds
+  - aws/credentials/endpointcreds
+  - aws/credentials/stscreds
+  - aws/defaults
+  - aws/ec2metadata
+  - aws/endpoints
+  - aws/request
+  - aws/session
+  - aws/signer/v4
+  - private/protocol
+  - private/protocol/json/jsonutil
+  - private/protocol/jsonrpc
+  - private/protocol/query
+  - private/protocol/query/queryutil
+  - private/protocol/rest
+  - private/protocol/restjson
+  - private/protocol/xml/xmlutil
+  - private/waiter
+  - service/iam
+  - service/lambda
+  - service/sts
+- name: github.com/elazarl/goproxy
+  version: 0a5b8bdb09049ae4ae68e75437ded0b7a2e324e3
+- name: github.com/go-ini/ini
+  version: 6f66b0e091edb3c7b380f7c4f0f884274d550b67
+- name: github.com/hashicorp/yamux
+  version: d1caa6c97c9fc1cc9e83bbe34d0603f9ff0ce8bd
+- name: github.com/jmespath/go-jmespath
+  version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
+- name: github.com/pkg/errors
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
+testImports: []
