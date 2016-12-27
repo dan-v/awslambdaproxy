@@ -1,17 +1,17 @@
-<b>awslambdaproxy</b> is an [AWS Lambda](https://aws.amazon.com/lambda/) powered HTTP(s) proxy. It provides a constantly rotating IP address for your web traffic from any regions where AWS Lambda is available. The goal is to make it harder to track you as a web user.
+<b>awslambdaproxy</b> is an [AWS Lambda](https://aws.amazon.com/lambda/) powered HTTP(s) web proxy. It provides a constantly rotating IP address for your web traffic from all regions where AWS Lambda is available. The goal is to obfuscate your web traffic and make it harder to track you as a user.
 
 ![](/images/overview.gif?raw=true)
 
 ## Benefits
 * HTTP & HTTPS support.
 * No special software required. Just configure your system to use an HTTP proxy.
-* Each AWS Lambda region provides 1 IP address that gets rotated roughly every 4 hours. That means if you use 10 AWS regions, you'll get 60 unique IPs per day.
+* Each AWS Lambda region provides 1 outgoing IP address that gets rotated roughly every 4 hours. That means if you use 10 AWS regions, you'll get 60 unique IPs per day.
 * Configurable IP rotation frequency between multiple regions. By default IP will rotate to new region every 10 seconds.
 * Personal "proxy server" not shared with anyone else.
-* Mostly [AWS free tier](https://aws.amazon.com/free/) compatible (see FAQ below)
+* Mostly [AWS free tier](https://aws.amazon.com/free/) compatible (see FAQ below).
 
 ## How it works
-At a high level, awslambdaproxy proxies HTTP(s) traffic through AWS Lambda regional endpoints. To do this, awslambdaproxy is setup on a publicly accessible host (e.g. EC2 instance) and it handles creating Lambda resources that run a simple HTTP proxy ([elazarl/goproxy](https://github.com/elazarl/goproxy)). Since Lambda does not allow you to bind ports in your executing functions, the HTTP proxy is bound to a unix socket and a reverse tunnel is established from the Lambda function to port 8081 on the host running awslambdaproxy. Once a tunnel connection is established, all user web traffic is forwarded from port 8080 through this HTTP proxy. Lambda functions have a max execution time of 5 minutes, so there is a goroutine that continuously executes Lambda functions at a constant frequency to ensure there is always a live tunnel in place. If multiple regions are specified, user HTTP traffic will be routed in a round robin fashion across these regions.
+At a high level, awslambdaproxy proxies HTTP(s) traffic through AWS Lambda regional endpoints. To do this, awslambdaproxy is setup on a publicly accessible host (e.g. EC2 instance) and it handles creating Lambda resources that run a simple HTTP proxy ([elazarl/goproxy](https://github.com/elazarl/goproxy)). Since Lambda does not allow you to bind ports in your executing functions, the HTTP proxy is bound to a unix socket and a reverse tunnel is established from the Lambda function to port 8081 on the host running awslambdaproxy. Once a tunnel connection is established, all user web traffic is forwarded from port 8080 through this HTTP proxy. Lambda functions have a max execution time of 5 minutes, so there is a goroutine that continuously executes Lambda functions to ensure there is always a live tunnel in place. If multiple regions are specified, user HTTP traffic will be routed in a round robin fashion across these regions.
 
 ![](/images/how-it-works.png?raw=true)
 
