@@ -15,7 +15,7 @@ const (
 
 func main() {
 	regionsPtr := flag.String("regions", "us-west-2", "Regions to run proxy (e.g. us-west-2) (can be comma separated list)")
-	frequencyPtr := flag.Int( "frequency", 10, "Frequency in seconds to execute Lambda function. If multiple regions are specified, this will cause traffic to rotate round robin at the interval specified here")
+	frequencyPtr := flag.Int( "frequency", 180, "Frequency in seconds to execute Lambda function. If multiple regions are specified, this will cause traffic to rotate round robin at the interval specified here")
 	proxyPortPtr := flag.String("proxy-port", "8080", "Port to listen for proxy connections")
 	tunnelPortPtr := flag.String("tunnel-port", "8081", "Port to listen for reverse connection from Lambda")
 	flag.Parse()

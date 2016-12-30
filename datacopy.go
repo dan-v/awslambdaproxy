@@ -18,21 +18,20 @@ func (d *DataCopyManager) run() {
 }
 
 func (d *DataCopyManager) handleClient(userConn net.Conn) {
-	d.tunnelConnectionManager.mutex.RLock()
-	tunnelStream, err := d.tunnelConnectionManager.lastTunnel.sess.Open()
-	d.tunnelConnectionManager.mutex.RUnlock()
+	tunnelStream, err := d.tunnelConnectionManager.getActiveSession()
 	if err != nil {
 		log.Println("Failed to open stream to remote")
 		return
 	}
 
-	log.Println("Opened stream to remote " + tunnelStream.RemoteAddr().String())
 	bidirectionalCopy(tunnelStream, userConn)
 }
 
 func newDataCopyManager(user *UserConnectionManager, tunnel *TunnelConnectionManager) *DataCopyManager {
-	return &DataCopyManager{
+	copyManager :=  &DataCopyManager{
 		userConnectionManager: user,
 		tunnelConnectionManager: tunnel,
 	}
+	go copyManager.run()
+	return copyManager
 }

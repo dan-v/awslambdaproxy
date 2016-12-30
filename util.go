@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	getIPUrl = "http://myexternalip.com/raw"
+	getIPUrl = "http://checkip.amazonaws.com/"
 )
 
 func bidirectionalCopy(dst io.ReadWriteCloser, src io.ReadWriteCloser) {
