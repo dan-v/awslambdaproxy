@@ -44,8 +44,8 @@ The easiest way is to download a pre-built binary from the [GitHub Releases](htt
 
 1. Copy `awslambdaproxy` binary to a publicly accessible linux host (e.g. EC2 instance). You will need to open the following ports on this host:
 
-    * Port 8080 - this port listens for user proxy connections and needs to only be opened to whatever your external IP address is where you plan to browse the web.
-    * Port 8081 - this port listens for tunnel connections from executing Lambda functions and needs to be opened to the world. This is a security concern and will be locked down in the future.
+    * Port 8080 - this port listens for user proxy connections and needs to only be opened to whatever your external IP address is where you plan to browse the web. Alternatively on OSX, I use [Secure Pipes](https://www.opoet.com/pyro/) to setup a SSH tunnel with port 8080 forwarded to localhost. This allows port 8080 to remain unexposed and instead relies on SSH being exposed.
+    * Port 8081 - this port listens for tunnel connections from executing Lambda functions and needs to be opened to the world. <b>This is a security concern and will be locked down in the future.</b>
 
 2. On publicly accessible host, run `awslambdaproxy`. You'll need to ensure AWS access key and secret key environment variables are defined. For now, this access key should have AdministratorAccess.
 
@@ -59,7 +59,7 @@ The easiest way is to download a pre-built binary from the [GitHub Releases](htt
 
 ## FAQ
 1. <b>Should I use awslambdaproxy?</b> That's up to you. Use at your own risk.
-2. <b>Will this make me completely anonymous?</b> No, absolutely not. The goal of this project is just to obfuscate your web traffic by rotating your IP address. All of your traffic is going through AWS which could be traced back to your account. You can also be tracked still with [browser fingerprinting](https://panopticlick.eff.org/), etc.
+2. <b>Will this make me completely anonymous?</b> No, absolutely not. The goal of this project is just to obfuscate your web traffic by rotating your IP address. All of your traffic is going through AWS which could be traced back to your account. You can also be tracked still with [browser fingerprinting](https://panopticlick.eff.org/), etc. Your [IP address may still leak](https://ipleak.net/) due to WebRTC, Flash, etc.
 3. <b>How often will my external IP address change?</b> For each region specified, the IP address will change roughly every 4 hours. This of course is subject to change at any moment as this is not something that is documented by AWS Lambda.
 4. <b>How big is the pool of IP addresses?</b> This I don't know, but I do know I did not have a duplicate IP while running the proxy for a week.
 5. <b>How much does this cost?</b> awslambdaproxy should be able to run mostly on the [AWS free tier](https://aws.amazon.com/free/) minus bandwidth costs. It can run on a t2.micro instance and the default 128MB Lambda function that is constantly running should also fall in the free tier usage. The bandwidth is what will cost you money; you will pay for bandwidth usage for both EC2 and Lambda.

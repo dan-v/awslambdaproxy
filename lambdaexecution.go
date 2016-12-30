@@ -22,34 +22,41 @@ func (l *LambdaExecutionManager) run() {
 	log.Println("Using public IP", l.publicIp)
 	log.Println("Lambda execution frequency", l.frequency)
 	for {
-		sess := session.New(&aws.Config{})
 		for region := range l.regions {
-			svc := lambda.New(sess, &aws.Config{Region: aws.String(l.regions[region])})
-			payload, _ := json.Marshal(l.publicIp + ":" + l.port)
-			params := &lambda.InvokeInput{
-				FunctionName:   aws.String(lambdaFunctionName),
-				InvocationType: aws.String(lambda.InvocationTypeEvent),
-				Payload:        payload,
-			}
-			log.Println("Executing Lambda function in region", l.regions[region])
-			_, err := svc.Invoke(params)
-			if err != nil {
-				log.Println("Failed to execute Lambda function.", err.Error())
-			}
+			l.executeFunction(region)
 			time.Sleep(l.frequency)
 		}
 	}
 }
 
+func (l *LambdaExecutionManager) executeFunction(region int) error {
+	log.Println("Executing Lambda function in region", l.regions[region])
+	sess := session.New(&aws.Config{})
+	svc := lambda.New(sess, &aws.Config{Region: aws.String(l.regions[region])})
+	payload, _ := json.Marshal(l.publicIp + ":" + l.port)
+	params := &lambda.InvokeInput{
+		FunctionName:   aws.String(lambdaFunctionName),
+		InvocationType: aws.String(lambda.InvocationTypeEvent),
+		Payload:        payload,
+	}
+	_, err := svc.Invoke(params)
+	if err != nil {
+		return errors.Wrap(err, "Failed to execute Lambda function")
+	}
+	return nil
+}
+
 func newLambdaExecutionManager(port string, regions []string, frequency time.Duration) (*LambdaExecutionManager, error) {
 	publicIp, err := getPublicIp()
 	if err != nil {
-		return nil, errors.Wrap(err, "Error getting IP address")
+		return nil, errors.Wrap(err, "Error getting public IP address")
 	}
-	return &LambdaExecutionManager{
+	executionManager := &LambdaExecutionManager{
 		port: port,
 		regions: regions,
 		frequency: frequency,
 		publicIp: publicIp,
-	}, nil
+	}
+	go executionManager.run()
+	return executionManager, nil
 }

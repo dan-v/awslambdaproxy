@@ -15,7 +15,6 @@ type UserConnectionManager struct {
 func (u *UserConnectionManager) run() {
 	for {
 		c, err := u.listener.Accept()
-		log.Println("Accepted user connection..")
 		if err != nil {
 			log.Println("Failed to accept user connection")
 			return
@@ -33,10 +32,12 @@ func newUserConnectionManager(port string) (*UserConnectionManager, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to start UserConnectionManager")
 	}
-	return &UserConnectionManager{
+	connectionManager := &UserConnectionManager{
 		listener: listener,
 		connections: make(chan net.Conn),
-	}, nil
+	}
+	go connectionManager.run()
+	return connectionManager, nil
 }
 
 func startUserListener(proxyPort string) (net.Listener, error) {
