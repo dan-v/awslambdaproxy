@@ -31,10 +31,11 @@ func ServerInit(proxyPort string, tunnelPort string, regions []string, lambdaExe
 		os.Exit(1)
 	}
 
+	// TODO: hack to start new tunnel in case there is a failure
 	go func(){
 		for {
 			<-tunnelConnectionManager.emergencyTunnel
-			log.Println("EMERGENCY TUNNEL STARTED")
+			log.Println("Starting new tunnel as existing tunnel failed")
 			lambdaExecutionManager.executeFunction(0)
 			time.Sleep(time.Second * 5)
 		}
