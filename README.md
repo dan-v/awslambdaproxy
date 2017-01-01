@@ -6,8 +6,8 @@
 * HTTP & HTTPS support.
 * No special software required. Just configure your system to use an HTTP proxy.
 * Each AWS Lambda region provides 1 outgoing IP address that gets rotated roughly every 4 hours. That means if you use 10 AWS regions, you'll get 60 unique IPs per day.
-* Configurable IP rotation frequency between multiple regions. By default IP will rotate to new region every 10 seconds.
-* Personal "proxy server" not shared with anyone else.
+* Configurable IP rotation frequency between multiple regions. By default IP will rotate to new region every 3 minutes.
+* Personal proxy server not shared with anyone else.
 * Mostly [AWS free tier](https://aws.amazon.com/free/) compatible (see FAQ below).
 
 ## How it works
@@ -44,7 +44,7 @@ The easiest way is to download a pre-built binary from the [GitHub Releases](htt
 
 1. Copy `awslambdaproxy` binary to a publicly accessible linux host (e.g. EC2 instance). You will need to open the following ports on this host:
 
-    * Port 8080 - this port listens for user proxy connections and needs to only be opened to whatever your external IP address is where you plan to browse the web. Alternatively on OSX, I use [Secure Pipes](https://www.opoet.com/pyro/) to setup a SSH tunnel with port 8080 forwarded to localhost. This allows port 8080 to remain unexposed and instead relies on SSH being exposed.
+    * Port 8080 - this port listens for user proxy connections and needs to only be opened to whatever your external IP address is where you plan to browse the web.
     * Port 8081 - this port listens for tunnel connections from executing Lambda functions and needs to be opened to the world. <b>This is a security concern and will be locked down in the future.</b>
 
 2. On publicly accessible host, run `awslambdaproxy`. You'll need to ensure AWS access key and secret key environment variables are defined. For now, this access key should have AdministratorAccess.
@@ -52,10 +52,10 @@ The easiest way is to download a pre-built binary from the [GitHub Releases](htt
     ```sh
     export AWS_ACCESS_KEY_ID=XXXXXXXXXX
     export AWS_SECRET_ACCESS_KEY=YYYYYYYYYYYYYYYYYYYYYY
-    ./awslambdaproxy -regions us-west-2,us-west-1,us-east-1,us-east-2 -frequency 10
+    ./awslambdaproxy -regions us-west-2,us-west-1,us-east-1,us-east-2
     ```
     
-3. Configure your web browser (or OS) to use an HTTP proxy at the publicly accessible host running `awslambdaproxy` on port 8080.
+3. Configure your web browser (or OS) to use an HTTP and HTTPS proxy at the publicly accessible host running `awslambdaproxy` on port 8080.
 
 ## FAQ
 1. <b>Should I use awslambdaproxy?</b> That's up to you. Use at your own risk.
@@ -63,10 +63,15 @@ The easiest way is to download a pre-built binary from the [GitHub Releases](htt
 3. <b>How often will my external IP address change?</b> For each region specified, the IP address will change roughly every 4 hours. This of course is subject to change at any moment as this is not something that is documented by AWS Lambda.
 4. <b>How big is the pool of IP addresses?</b> This I don't know, but I do know I did not have a duplicate IP while running the proxy for a week.
 5. <b>How much does this cost?</b> awslambdaproxy should be able to run mostly on the [AWS free tier](https://aws.amazon.com/free/) minus bandwidth costs. It can run on a t2.micro instance and the default 128MB Lambda function that is constantly running should also fall in the free tier usage. The bandwidth is what will cost you money; you will pay for bandwidth usage for both EC2 and Lambda.
+6. <b>Why does my connection drop periodically?</b> AWS Lambda functions can currently only execute for a maximum of 5 minutes. In order to maintain an ongoing HTTP proxy a new function is executed and all new traffic is cut over to it. Any ongoing connections to previous Lambda function will hard stop after a timeout period.
 
-## Future work
+# Powered by
+* [Goproxy](https://github.com/elazarl/goproxy) - An HTTP proxy written in Go.
+* [Yamux](https://github.com/hashicorp/yamux) - Golang connection multiplexing library.
+* [Goad](https://github.com/goadapp/goad) - Code was borrowed from this project to handle AWS Lambda zip creation and function upload.
+
+# Future work
 * Add security to proxy and tunnel connections
 * Fix connections dropping each time a new tunnel is established
 * Create minimal IAM policy
-* Rewrite code to be testable
-* Write tests
+* Rewrite code to be testable and write tests
