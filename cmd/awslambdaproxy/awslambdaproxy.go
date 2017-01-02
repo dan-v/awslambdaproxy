@@ -16,6 +16,7 @@ const (
 func main() {
 	regionsPtr := flag.String("regions", "us-west-2", "Regions to run proxy (e.g. us-west-2) (can be comma separated list)")
 	frequencyPtr := flag.Int( "frequency", 180, "Frequency in seconds to execute Lambda function. If multiple regions are specified, this will cause traffic to rotate round robin at the interval specified here")
+	proxyTypePtr := flag.String("proxy-type", "http", "Proxy type to setup: 'http' or 'socks'")
 	proxyPortPtr := flag.String("proxy-port", "8080", "Port to listen for proxy connections")
 	tunnelPortPtr := flag.String("tunnel-port", "8081", "Port to listen for reverse connection from Lambda")
 	flag.Parse()
@@ -29,6 +30,10 @@ func main() {
 		os.Exit(1)
 	}
 	if *regionsPtr == "" {
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+	if *proxyTypePtr != "http" && *proxyTypePtr != "socks" {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -53,6 +58,6 @@ func main() {
 	}
 
 	regions := strings.Split(*regionsPtr, ",")
-	awslambdaproxy.ServerInit(*proxyPortPtr, *tunnelPortPtr, regions, frequencySeconds)
+	awslambdaproxy.ServerInit(*proxyPortPtr, *tunnelPortPtr, regions, frequencySeconds, *proxyTypePtr)
 }
 

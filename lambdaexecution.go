@@ -16,6 +16,12 @@ type LambdaExecutionManager struct {
 	regions []string
 	frequency time.Duration
 	publicIp string
+	proxyType string
+}
+
+type LambdaPayload struct {
+	ConnectBackAddress string
+	ProxyType string
 }
 
 func (l *LambdaExecutionManager) run() {
@@ -33,7 +39,11 @@ func (l *LambdaExecutionManager) executeFunction(region int) error {
 	log.Println("Executing Lambda function in region", l.regions[region])
 	sess := session.New(&aws.Config{})
 	svc := lambda.New(sess, &aws.Config{Region: aws.String(l.regions[region])})
-	payload, _ := json.Marshal(l.publicIp + ":" + l.port)
+	lambdaPayload := LambdaPayload{
+		ConnectBackAddress: l.publicIp + ":" + l.port,
+		ProxyType: l.proxyType,
+	}
+	payload, _ := json.Marshal(lambdaPayload)
 	params := &lambda.InvokeInput{
 		FunctionName:   aws.String(lambdaFunctionName),
 		InvocationType: aws.String(lambda.InvocationTypeEvent),
@@ -46,7 +56,7 @@ func (l *LambdaExecutionManager) executeFunction(region int) error {
 	return nil
 }
 
-func newLambdaExecutionManager(port string, regions []string, frequency time.Duration) (*LambdaExecutionManager, error) {
+func newLambdaExecutionManager(port string, regions []string, frequency time.Duration, proxyType string) (*LambdaExecutionManager, error) {
 	publicIp, err := getPublicIp()
 	if err != nil {
 		return nil, errors.Wrap(err, "Error getting public IP address")
@@ -56,6 +66,7 @@ func newLambdaExecutionManager(port string, regions []string, frequency time.Dur
 		regions: regions,
 		frequency: frequency,
 		publicIp: publicIp,
+		proxyType: proxyType,
 	}
 	go executionManager.run()
 	return executionManager, nil

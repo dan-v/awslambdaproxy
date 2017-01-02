@@ -7,7 +7,7 @@ import (
 	"runtime"
 )
 
-func ServerInit(proxyPort string, tunnelPort string, regions []string, lambdaExecutionFrequency time.Duration) {
+func ServerInit(proxyPort string, tunnelPort string, regions []string, lambdaExecutionFrequency time.Duration, proxyType string) {
 	lambdaExecutionTimeout := int64(lambdaExecutionFrequency.Seconds()) + int64(10)
 
 	log.Println("Setting up Lambda infrastructure")
@@ -25,7 +25,7 @@ func ServerInit(proxyPort string, tunnelPort string, regions []string, lambdaExe
 	}
 
 	log.Println("Starting LambdaExecutionManager")
-	lambdaExecutionManager, err := newLambdaExecutionManager(tunnelPort, regions, lambdaExecutionFrequency)
+	lambdaExecutionManager, err := newLambdaExecutionManager(tunnelPort, regions, lambdaExecutionFrequency, proxyType)
 	if err != nil {
 		log.Println("Failed to setup LambdaExecutionManager", err.Error())
 		os.Exit(1)
