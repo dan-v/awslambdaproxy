@@ -8,8 +8,10 @@ logger.setLevel(logging.INFO)
 def handler(event, context):
     logger.info("Event: {}".format(event))
     logger.info("Context: {}".format(context))
+    address = event['ConnectBackAddress']
+    proxy_type = event['ProxyType']
 
-    command = "./awslambdaproxy-lambda -address {}".format(event)
+    command = "./awslambdaproxy-lambda -address {} -proxy-type {}".format(address, proxy_type)
     logger.info("Running: {}".format(command))
     try:
         proc = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)

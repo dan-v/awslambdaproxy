@@ -10,9 +10,9 @@ const (
 	proxyUnixSocket = "/tmp/lambda-proxy.socket"
 )
 
-func LambdaInit(tunnelHost string) {
+func LambdaInit(tunnelHost string, proxyType string) {
 	log.Println("Starting LambdaProxyServer")
-	lambdaProxyServer := startLambdaProxyServer()
+	lambdaProxyServer := startLambdaProxyServer(proxyType)
 
 	log.Println("Establishing tunnel connection to", tunnelHost)
 	lambdaTunnelConnection := setupLambdaTunnelConnection(tunnelHost)
@@ -24,6 +24,7 @@ func LambdaInit(tunnelHost string) {
 
 func main() {
 	addressPtr := flag.String("address", "localhost:8081", "IP and port of server to connect to")
+	proxyTypePtr := flag.String("proxy-type", "http", "Proxy type to setup: 'http' or 'socks'")
 
 	flag.Parse()
 
@@ -32,7 +33,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	LambdaInit(*addressPtr)
+	if *proxyTypePtr != "http" && *proxyTypePtr != "socks" {
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
+	LambdaInit(*addressPtr, *proxyTypePtr)
 
 }
 
