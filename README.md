@@ -10,6 +10,9 @@
 * Personal proxy server not shared with anyone else.
 * Mostly [AWS free tier](https://aws.amazon.com/free/) compatible (see FAQ below).
 
+## Project status
+Current code status: <b>proof of concept</b>. This is the first Go application that I've ever written. It has no tests. Listening endpoints have no security yet. It may not work. It may blow up. Use at your own risk.
+
 ## How it works
 At a high level, awslambdaproxy proxies HTTP(s) traffic through AWS Lambda regional endpoints. To do this, awslambdaproxy is setup on a publicly accessible host (e.g. EC2 instance) and it handles creating Lambda resources that run a simple HTTP proxy ([elazarl/goproxy](https://github.com/elazarl/goproxy)). Since Lambda does not allow you to bind ports in your executing functions, the HTTP proxy is bound to a unix socket and a reverse tunnel is established from the Lambda function to port 8081 on the host running awslambdaproxy. Once a tunnel connection is established, all user web traffic is forwarded from port 8080 through this HTTP proxy. Lambda functions have a max execution time of 5 minutes, so there is a goroutine that continuously executes Lambda functions to ensure there is always a live tunnel in place. If multiple regions are specified, user HTTP traffic will be routed in a round robin fashion across these regions.
 
