@@ -4,6 +4,7 @@ package awslambdaproxy
 
 import (
 	"time"
+	"log"
 
 	"github.com/pkg/errors"
 	"github.com/aws/aws-sdk-go/aws"
@@ -20,13 +21,13 @@ const (
 	lambdaFunctionIamRole = "awslambdaproxy-role"
 	lambdaFunctionIamRolePolicyName = "awslambdaproxy-role-policy"
 	lambdaFunctionZipLocation = "data/lambda.zip"
-	lambdaFunctionMemory = 128
 )
 
 type LambdaInfrastructure struct {
-	config   *aws.Config
-	regions []string
-	timeout int64
+	config           *aws.Config
+	regions          []string
+	lambdaTimeout    int64
+	lambdaMemorySize int64
 }
 
 func (infra *LambdaInfrastructure) setup() error {
@@ -39,19 +40,21 @@ func (infra *LambdaInfrastructure) setup() error {
 		return errors.Wrap(err, "Could not read ZIP file: " + lambdaFunctionZipLocation)
 	}
 	for _, region := range infra.regions {
+		log.Println("Setting up Lambda function in region: " + region)
 		err = infra.createOrUpdateLambdaFunction(region, roleArn, zip)
 		if err != nil {
-			return errors.Wrap(err, "Could not create/update Lambda function")
+			return errors.Wrap(err, "Could not create Lambda function in region " + region)
 		}
 	}
 	return nil
 }
 
-func setupLambdaInfrastructure(regions []string, timeout int64) (error) {
+func setupLambdaInfrastructure(regions []string, memorySize int64, timeout int64) (error) {
 	infra := LambdaInfrastructure{
-		regions: regions,
-		config: &aws.Config{},
-		timeout: timeout,
+		regions:          regions,
+		config:           &aws.Config{},
+		lambdaTimeout:    timeout,
+		lambdaMemorySize: memorySize,
 	}
 	if err := infra.setup(); err != nil {
 		return errors.Wrap(err, "Could not setup Lambda Infrastructure")
@@ -64,20 +67,28 @@ func (infra *LambdaInfrastructure) createOrUpdateLambdaFunction(region, roleArn 
 	svc := lambda.New(session.New(), config)
 
 	exists, err := lambdaExists(svc)
-
 	if err != nil {
 		return err
 	}
 
 	if exists {
-		aliasExists, err := lambdaAliasExists(svc)
-		if err != nil || aliasExists {
+		err := infra.deleteLambdaFunction(svc)
+		if err != nil {
 			return err
 		}
-		return infra.updateLambdaFunction(svc, roleArn, payload)
 	}
 
 	return infra.createLambdaFunction(svc, roleArn, payload)
+}
+
+func (infra *LambdaInfrastructure) deleteLambdaFunction(svc *lambda.Lambda) error {
+	_, err := svc.DeleteFunction(&lambda.DeleteFunctionInput{
+		FunctionName: aws.String(lambdaFunctionName),
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (infra *LambdaInfrastructure) createLambdaFunction(svc *lambda.Lambda, roleArn string, payload []byte) error {
@@ -89,9 +100,9 @@ func (infra *LambdaInfrastructure) createLambdaFunction(svc *lambda.Lambda, role
 		Handler:      aws.String(lambdaFunctionHandler),
 		Role:         aws.String(roleArn),
 		Runtime:      aws.String(lambdaFunctionRuntime),
-		MemorySize:   aws.Int64(lambdaFunctionMemory),
+		MemorySize:   aws.Int64(infra.lambdaMemorySize),
 		Publish:      aws.Bool(true),
-		Timeout:      aws.Int64(infra.timeout),
+		Timeout:      aws.Int64(infra.lambdaTimeout),
 	})
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {
@@ -141,24 +152,6 @@ func createLambdaAlias(svc *lambda.Lambda, functionVersion *string) error {
 		Name:            aws.String(LambdaVersion()),
 	})
 	return err
-}
-
-func lambdaAliasExists(svc *lambda.Lambda) (bool, error) {
-	_, err := svc.GetAlias(&lambda.GetAliasInput{
-		FunctionName: aws.String(lambdaFunctionName),
-		Name:         aws.String(LambdaVersion()),
-	})
-
-	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "ResourceNotFoundException" {
-				return false, nil
-			}
-		}
-		return false, err
-	}
-
-	return true, nil
 }
 
 func (infra *LambdaInfrastructure) createIAMLambdaRole(roleName string) (arn string, err error) {

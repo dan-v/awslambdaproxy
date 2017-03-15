@@ -17,14 +17,14 @@ func (l *LambdaDataCopyManager) run() {
 	for {
 		proxySocketConn, proxySocketErr := net.Dial("unix", l.lambdaProxyServer.unixSocket)
 		if proxySocketErr != nil {
-			log.Println("Failed to open connection to proxy")
+			log.Println("Failed to open connection to proxy", proxySocketErr)
 			os.Exit(1)
 		}
 		log.Println("Started connection to proxy on socket " + l.lambdaProxyServer.unixSocket)
 
 		tunnelStream, tunnelErr := l.lambdaTunnelConnection.sess.Accept()
 		if tunnelErr != nil {
-			log.Println("Failed to start stream inside session")
+			log.Println("Failed to start stream inside session", tunnelErr)
 			os.Exit(1)
 		}
 		log.Println("Started stream inside session")
@@ -55,4 +55,5 @@ func bidirectionalCopy(dst io.ReadWriteCloser, src io.ReadWriteCloser) {
 		src.Close()
 		wg.Done()
 	}()
+	wg.Wait()
 }
