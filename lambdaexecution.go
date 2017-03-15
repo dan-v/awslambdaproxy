@@ -12,16 +12,23 @@ import (
 )
 
 type LambdaExecutionManager struct {
-	port string
 	regions []string
 	frequency time.Duration
 	publicIp string
-	proxyType string
+	sshPort string
+	sshKey string
+	sshUser string
+	proxyUsername string
+	proxyPassword string
 }
 
 type LambdaPayload struct {
 	ConnectBackAddress string
-	ProxyType string
+	SSHPort string
+	SSHKey string
+	SSHUser string
+	ProxyUsername string
+	ProxyPassword string
 }
 
 func (l *LambdaExecutionManager) run() {
@@ -40,8 +47,12 @@ func (l *LambdaExecutionManager) executeFunction(region int) error {
 	sess := session.New(&aws.Config{})
 	svc := lambda.New(sess, &aws.Config{Region: aws.String(l.regions[region])})
 	lambdaPayload := LambdaPayload{
-		ConnectBackAddress: l.publicIp + ":" + l.port,
-		ProxyType: l.proxyType,
+		ConnectBackAddress: l.publicIp,
+		SSHPort: l.sshPort,
+		SSHKey: l.sshKey,
+		SSHUser: l.sshUser,
+		ProxyUsername: l.proxyUsername,
+		ProxyPassword: l.proxyPassword,
 	}
 	payload, _ := json.Marshal(lambdaPayload)
 	params := &lambda.InvokeInput{
@@ -56,18 +67,28 @@ func (l *LambdaExecutionManager) executeFunction(region int) error {
 	return nil
 }
 
-func newLambdaExecutionManager(port string, regions []string, frequency time.Duration, proxyType string) (*LambdaExecutionManager, error) {
-	publicIp, err := getPublicIp()
-	if err != nil {
-		return nil, errors.Wrap(err, "Error getting public IP address")
-	}
+func newLambdaExecutionManager(publicIp string, regions []string, frequency time.Duration, sshUser string, sshPort string, privateKey []byte,
+				proxyUsername string, proxyPassword string, onDemandExecution chan bool) (*LambdaExecutionManager, error) {
 	executionManager := &LambdaExecutionManager{
-		port: port,
 		regions: regions,
 		frequency: frequency,
 		publicIp: publicIp,
-		proxyType: proxyType,
+		sshPort: sshPort,
+		sshKey: string(privateKey[:]),
+		sshUser: sshUser,
+		proxyUsername: proxyUsername,
+		proxyPassword: proxyPassword,
 	}
 	go executionManager.run()
+
+	go func(){
+		for {
+			<-onDemandExecution
+			log.Println("Starting new tunnel as existing tunnel failed")
+			executionManager.executeFunction(0)
+			time.Sleep(time.Second * 5)
+		}
+	}()
+
 	return executionManager, nil
 }

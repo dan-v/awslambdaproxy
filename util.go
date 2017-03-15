@@ -30,6 +30,7 @@ func bidirectionalCopy(dst io.ReadWriteCloser, src io.ReadWriteCloser) {
 		src.Close()
 		wg.Done()
 	}()
+	wg.Wait()
 }
 
 func getPublicIp() (string, error) {

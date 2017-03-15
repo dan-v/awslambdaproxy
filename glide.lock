@@ -1,10 +1,10 @@
-hash: 99d6f052474e80bfd5edd14e22f2a6a26ba70e133f1f082757d3ace537c2c9ab
-updated: 2017-01-01T21:17:49.211663888-08:00
+hash: 82f8b96da631b364b590c412409b8d470f9cf529c82d11df53e8a5d2b610b387
+updated: 2017-03-26T22:22:52.459782457-07:00
 imports:
 - name: github.com/armon/go-socks5
   version: e75332964ef517daa070d7c38a9466a0d687e0a5
 - name: github.com/aws/aws-sdk-go
-  version: 36670f6ab1769ad77fa5f7e2c194398733503635
+  version: d122c9c0e1d875585918c85cf6eba7e5e43f221d
   subpackages:
   - aws
   - aws/awserr
@@ -30,22 +30,26 @@ imports:
   - private/protocol/rest
   - private/protocol/restjson
   - private/protocol/xml/xmlutil
-  - private/waiter
   - service/iam
   - service/lambda
   - service/sts
-- name: github.com/elazarl/goproxy
-  version: 0a5b8bdb09049ae4ae68e75437ded0b7a2e324e3
 - name: github.com/go-ini/ini
-  version: 6f66b0e091edb3c7b380f7c4f0f884274d550b67
+  version: 1730955e3146956d6a087861380f9b4667ed5071
 - name: github.com/hashicorp/yamux
   version: d1caa6c97c9fc1cc9e83bbe34d0603f9ff0ce8bd
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
+- name: golang.org/x/crypto
+  version: 459e26527287adbc2adcc5d0d49abff9a5f315a7
+  subpackages:
+  - curve25519
+  - ed25519
+  - ed25519/internal/edwards25519
+  - ssh
 - name: golang.org/x/net
-  version: f315505cf3349909cdf013ea56690da34e96a451
+  version: 6c23252515492caf9b228a9d5cabcdbde29f7f82
   subpackages:
   - context
 testImports: []
