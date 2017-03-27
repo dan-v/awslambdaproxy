@@ -9,9 +9,17 @@ def handler(event, context):
     logger.info("Event: {}".format(event))
     logger.info("Context: {}".format(context))
     address = event['ConnectBackAddress']
-    proxy_type = event['ProxyType']
+    ssh_port = event['SSHPort']
+    ssh_key = event['SSHKey']
+    ssh_user = event['SSHUser']
+    proxy_username = event['ProxyUsername']
+    proxy_password = event['ProxyPassword']
 
-    command = "./awslambdaproxy-lambda -address {} -proxy-type {}".format(address, proxy_type)
+    key_filename = "/tmp/privatekey"
+    with open(key_filename, 'w') as key_file:
+        key_file.write(ssh_key)
+
+    command = "./awslambdaproxy-lambda -address {} -ssh-port {} -ssh-private-key {} -ssh-user {}  -proxy-username {} -proxy-password {}".format(address, ssh_port, key_filename, ssh_user, proxy_username, proxy_password)
     logger.info("Running: {}".format(command))
     try:
         proc = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)

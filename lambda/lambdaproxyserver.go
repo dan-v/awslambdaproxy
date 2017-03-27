@@ -4,44 +4,28 @@ import (
 	"os"
 	"net"
 	"log"
-	"net/http"
 	"time"
 
 	"github.com/armon/go-socks5"
-	"github.com/elazarl/goproxy"
 )
 
 type LambdaProxyServer struct {
 	unixSocket string
-	proxyType string
-	listener net.Listener
+	unixListener net.Listener
+	username string
+	password string
 }
 
-func (l *LambdaProxyServer) runHttp() {
-	log.Println("Starting HTTP proxy server on socket", l.unixSocket)
-	proxy := goproxy.NewProxyHttpServer()
-	proxy.Verbose = true
-	for {
-		os.Remove(l.unixSocket)
-		socketAddress, err := net.ResolveUnixAddr("unix", l.unixSocket)
-		if err != nil {
-			log.Println("Failed to resolve unix socket " + l.unixSocket)
-			os.Exit(1)
-		}
-		unixListener, err := net.ListenUnix("unix", socketAddress)
-		if err != nil {
-			log.Println("Created listener on unix socket " + l.unixSocket)
-			os.Exit(1)
-		}
-		l.listener = unixListener
-		os.Chmod(l.unixSocket, 0777)
-		log.Fatal(http.Serve(unixListener, proxy))
-	}
-}
-
-func (l *LambdaProxyServer) runSocks() {
+func (l *LambdaProxyServer) run() {
 	log.Println("Starting Socks proxy server on socket", l.unixSocket)
-	conf := &socks5.Config{}
+	creds := socks5.StaticCredentials{
+		l.username:l.password,
+	}
+	cator := socks5.UserPassAuthenticator{Credentials: creds}
+	conf := &socks5.Config{
+		AuthMethods: []socks5.Authenticator{cator},
+		Logger:      log.New(os.Stdout, "", log.LstdFlags),
+	}
 	server, err := socks5.New(conf)
 	if err != nil {
 		panic(err)
@@ -58,37 +42,34 @@ func (l *LambdaProxyServer) runSocks() {
 			log.Println("Created listener on unix socket " + l.unixSocket)
 			os.Exit(1)
 		}
-		l.listener = unixListener
+		l.unixListener = unixListener
 		os.Chmod(l.unixSocket, 0777)
 		log.Fatal(server.Serve(unixListener))
 	}
 }
 
 func (l *LambdaProxyServer) isReady() bool {
-	if l.listener != nil {
+	if l.unixListener != nil {
 		return true
 	} else {
 		return false
 	}
 }
 
-func startLambdaProxyServer(proxyType string) *LambdaProxyServer {
-	ret := &LambdaProxyServer{
+func startLambdaProxyServer(username string, password string) *LambdaProxyServer {
+	server := &LambdaProxyServer{
 		unixSocket: proxyUnixSocket,
-		proxyType: proxyType,
+		username: username,
+		password: password,
 	}
-	if ret.proxyType == "http" {
-		go ret.runHttp()
-	} else {
-		go ret.runSocks()
-	}
+	go server.run()
 	for {
-		if ret.isReady() == true {
+		if server.isReady() == true {
 			break
 		} else {
 			log.Println("Proxy server not ready yet..")
 			time.Sleep(time.Second * 1)
 		}
 	}
-	return ret
+	return server
 }
