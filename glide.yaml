@@ -8,8 +8,6 @@ import:
   - aws/session
   - service/iam
   - service/lambda
-- package: github.com/elazarl/goproxy
-  version: ^1.0.0
 - package: github.com/hashicorp/yamux
 - package: github.com/pkg/errors
   version: ^0.8.0
