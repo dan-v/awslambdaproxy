@@ -18,8 +18,6 @@ type LambdaExecutionManager struct {
 	sshPort string
 	sshKey string
 	sshUser string
-	proxyUsername string
-	proxyPassword string
 }
 
 type LambdaPayload struct {
@@ -27,8 +25,6 @@ type LambdaPayload struct {
 	SSHPort string
 	SSHKey string
 	SSHUser string
-	ProxyUsername string
-	ProxyPassword string
 }
 
 func (l *LambdaExecutionManager) run() {
@@ -51,8 +47,6 @@ func (l *LambdaExecutionManager) executeFunction(region int) error {
 		SSHPort: l.sshPort,
 		SSHKey: l.sshKey,
 		SSHUser: l.sshUser,
-		ProxyUsername: l.proxyUsername,
-		ProxyPassword: l.proxyPassword,
 	}
 	payload, _ := json.Marshal(lambdaPayload)
 	params := &lambda.InvokeInput{
@@ -67,8 +61,8 @@ func (l *LambdaExecutionManager) executeFunction(region int) error {
 	return nil
 }
 
-func newLambdaExecutionManager(publicIp string, regions []string, frequency time.Duration, sshUser string, sshPort string, privateKey []byte,
-				proxyUsername string, proxyPassword string, onDemandExecution chan bool) (*LambdaExecutionManager, error) {
+func newLambdaExecutionManager(publicIp string, regions []string, frequency time.Duration, sshUser string, sshPort string,
+				privateKey []byte, onDemandExecution chan bool) (*LambdaExecutionManager, error) {
 	executionManager := &LambdaExecutionManager{
 		regions: regions,
 		frequency: frequency,
@@ -76,8 +70,6 @@ func newLambdaExecutionManager(publicIp string, regions []string, frequency time
 		sshPort: sshPort,
 		sshKey: string(privateKey[:]),
 		sshUser: sshUser,
-		proxyUsername: proxyUsername,
-		proxyPassword: proxyPassword,
 	}
 	go executionManager.run()
 
