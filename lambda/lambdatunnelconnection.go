@@ -10,6 +10,10 @@ import (
 	"io/ioutil"
 )
 
+const (
+	remoteTunnelPort = "localhost:8081"
+)
+
 type LambdaTunnelConnection struct {
 	tunnelHost string
 	sshUsername string
@@ -25,6 +29,7 @@ func (l *LambdaTunnelConnection) publicKeyFile() ssh.AuthMethod {
 func (l *LambdaTunnelConnection) setup() {
 	sshConfig := &ssh.ClientConfig{
 		User: l.sshUsername,
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Auth: []ssh.AuthMethod{
 			l.publicKeyFile(),
 		},
@@ -37,13 +42,13 @@ func (l *LambdaTunnelConnection) setup() {
 	}
 	log.Println("Created SSH tunnel to: " + l.tunnelHost)
 
-	localConn, err := tunnelConn.Dial("tcp", "localhost:8081")
+	localConn, err := tunnelConn.Dial("tcp", remoteTunnelPort)
 	if err != nil {
-		log.Println("Failed to create local tunnel to localhost:8081. Error: ", err)
+		log.Println("Failed to create local tunnel to " + remoteTunnelPort, err)
 		os.Exit(1)
 	}
 	l.conn = localConn
-	log.Println("Created local tunnel to localhost:8081")
+	log.Println("Created local tunnel to " + remoteTunnelPort)
 
 	tunnelSession, err := yamux.Server(localConn, nil)
 	if err != nil {
@@ -72,6 +77,7 @@ func setupLambdaTunnelConnection(tunnelHost string, sshPort string, sshUsername 
 		sshUsername: sshUsername,
 		sshSigner: signer,
 	}
+
 	tunnel.setup()
 	return tunnel, nil
 }
