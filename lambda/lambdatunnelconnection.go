@@ -25,6 +25,7 @@ func (l *LambdaTunnelConnection) publicKeyFile() ssh.AuthMethod {
 func (l *LambdaTunnelConnection) setup() {
 	sshConfig := &ssh.ClientConfig{
 		User: l.sshUsername,
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Auth: []ssh.AuthMethod{
 			l.publicKeyFile(),
 		},
