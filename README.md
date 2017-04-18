@@ -23,24 +23,9 @@ At a high level, awslambdaproxy proxies TCP/UDP traffic through AWS Lambda regio
 ### Binary
 The easiest way is to download a pre-built binary from the [GitHub Releases](https://github.com/dan-v/awslambdaproxy/releases) page.
 
-### Source
-1. Fetch the project with `go get`:
-
+### Using Go Get
   ```sh
-  go get github.com/dan-v/awslambdaproxy
-  cd $GOPATH/src/github.com/dan-v/awslambdaproxy
-  ```
-
-2. Install dependencies (using [Glide](https://github.com/Masterminds/glide) for dependency management)
-
-  ```sh
-  glide install
-  ```
-
-3. Run make to build awslambdaproxy. You'll find your `awslambdaproxy` binary in the `build` folder.
-
-  ```sh
-  make
+  go get github.com/dan-v/awslambdaproxy/cmd/awslambdaproxy/...
   ```
 
 ## Usage
@@ -115,3 +100,17 @@ aws iam create-access-key --user-name awslambdaproxy-run
 * [gost](https://github.com/ginuerzh/gost) - A simple security tunnel written in Golang.
 * [yamux](https://github.com/hashicorp/yamux) - Golang connection multiplexing library.
 * [goad](https://github.com/goadapp/goad) - Code was borrowed from this project to handle AWS Lambda zip creation and function upload.
+
+## Build From Source
+1. Fetch the project with `go get`:
+
+  ```sh
+  go get github.com/dan-v/awslambdaproxy
+  cd $GOPATH/src/github.com/dan-v/awslambdaproxy
+  ```
+
+2. Run make to build awslambdaproxy. You'll find your `awslambdaproxy` binary in the `build` folder.
+
+  ```sh
+  make
+  ```
