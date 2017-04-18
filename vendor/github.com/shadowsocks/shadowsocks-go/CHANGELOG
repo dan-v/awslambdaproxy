@@ -1,0 +1,54 @@
+1.2.1 (2017-01-22)
+    * Fix bug in handling of UDP OTA packets
+
+1.2.0 (2017-01-20)
+    * Support UDP relay on server side, and OTA
+    * Support "aes-[128/192/256]-ctr" encryption method (Thanks for @slurin)
+    * Support "chacha20-ietf" encryption method
+    * Improve performance of "chacha20" encryption method
+    * Correctly close connection if handshake failed
+
+1.1.5 (2016-05-04)
+    * Support OTA (Thanks for @ayanamist for implementing this feature)
+
+1.1.4 (2015-05-10)
+    * Support "chacha20" encryption method, thanks to @defia
+    * Support "salsa20" encryption method, thanks to @genzj
+    * Fix go 1.4 canonical import paths, thanks to @ddatsh
+    * Exit if port not bindable, thanks to @thomasf
+    * Always set timeout for data transfer
+    * More buffer reuse
+
+1.1.3 (2014-09-28)
+    * Fix can't specify encryption method in config file
+
+1.1.2 (2014-09-21)
+    * Support new encryption method "rc4-md5"
+    * Use aes-256-cfb as default encryption method for command line app
+
+1.1.1 (2013-07-12)
+    * Add -b option to limit listen address for client
+    * Fix can't override server address on command line
+
+1.1 (2013-05-26)
+    * Add more encryption methods
+    * Enable CGO for OS X when building
+
+1.0 (2013-05-17)
+    * Support specify servers with IPv6 address
+    * Support IPv6 address in socks requests
+    * Better handling of configuration file for debian package
+
+0.6.2 (2013-03-15)
+    * Connect to multiple servers in the order specified in config
+    * More information in server error log to help error diagnosing
+
+0.6.1 (2013-03-04)
+    * Small performance improvement
+    * For windows: provide shadowsocks-tray.exe to hide shadowsocks-local.exe in
+      system tray. (Thanks to phuslu's taskbar.)
+
+0.6 (2013-01-23)
+
+    * Generate ciphers on demand (encryption table cache is removed)
+    * Support RC4 encryption
