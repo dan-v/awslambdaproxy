@@ -6,6 +6,7 @@ import (
 	"net"
 	"io"
 	"sync"
+	"time"
 )
 
 type LambdaDataCopyManager struct {
@@ -15,12 +16,13 @@ type LambdaDataCopyManager struct {
 
 func (l *LambdaDataCopyManager) run() {
 	for {
-		proxySocketConn, proxySocketErr := net.Dial("unix", l.lambdaProxyServer.unixSocket)
+		proxySocketConn, proxySocketErr := net.Dial("tcp", l.lambdaProxyServer.port)
 		if proxySocketErr != nil {
 			log.Println("Failed to open connection to proxy", proxySocketErr)
-			os.Exit(1)
+			time.Sleep(time.Second)
+			continue
 		}
-		log.Println("Started connection to proxy on socket " + l.lambdaProxyServer.unixSocket)
+		log.Println("Started connection to proxy on port " + l.lambdaProxyServer.port)
 
 		tunnelStream, tunnelErr := l.lambdaTunnelConnection.sess.Accept()
 		if tunnelErr != nil {
@@ -40,19 +42,20 @@ func newLambdaDataCopyManager(p *LambdaProxyServer, t *LambdaTunnelConnection) *
 	}
 }
 
-func bidirectionalCopy(dst io.ReadWriteCloser, src io.ReadWriteCloser) {
+func bidirectionalCopy(src io.ReadWriteCloser, dst io.ReadWriteCloser) {
+	defer dst.Close()
+	defer src.Close()
+
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		io.Copy(dst, src)
-		dst.Close()
 		wg.Done()
 	}()
 
 	wg.Add(1)
 	go func() {
 		io.Copy(src, dst)
-		src.Close()
 		wg.Done()
 	}()
 	wg.Wait()
