@@ -1,10 +1,12 @@
-hash: 82f8b96da631b364b590c412409b8d470f9cf529c82d11df53e8a5d2b610b387
-updated: 2017-03-26T22:22:52.459782457-07:00
+hash: 1d387bb2cca7176487d127544bd3c61cd913ba820effbfe0da764f8a8ee31637
+updated: 2017-04-18T12:22:28.744078451-07:00
 imports:
-- name: github.com/armon/go-socks5
-  version: e75332964ef517daa070d7c38a9466a0d687e0a5
+- name: github.com/aead/chacha20
+  version: d31a916ded42d1640b9d89a26f8abd53cc96790c
+  subpackages:
+  - chacha
 - name: github.com/aws/aws-sdk-go
-  version: d122c9c0e1d875585918c85cf6eba7e5e43f221d
+  version: 4bbd6fa3fdede4c68e941248f974b8951c17de89
   subpackages:
   - aws
   - aws/awserr
@@ -33,23 +35,142 @@ imports:
   - service/iam
   - service/lambda
   - service/sts
+- name: github.com/fsnotify/fsnotify
+  version: 4da3e2cfbabc9f751898f250b49f2439785783a1
+- name: github.com/ginuerzh/gosocks4
+  version: fc196f9d34e35f19a813bff2f092a275131c23bc
+- name: github.com/ginuerzh/gosocks5
+  version: 0f737bddba2abd1496dc03c8b39b817cc5f33fa7
+- name: github.com/ginuerzh/gost
+  version: cf09f68827cceba1e35e6602a30a6e3b4c17a9fa
+- name: github.com/ginuerzh/pht
+  version: 8acf34a91f436364fadb82a630ab3c7e938e1d0f
 - name: github.com/go-ini/ini
-  version: 1730955e3146956d6a087861380f9b4667ed5071
+  version: e7fea39b01aea8d5671f6858f0532f56e8bff3a5
+- name: github.com/golang/glog
+  version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
+- name: github.com/hashicorp/golang-lru
+  version: 0a025b7e63adc15a622f29b0b2c4c3848243bbf6
+  subpackages:
+  - simplelru
+- name: github.com/hashicorp/hcl
+  version: 630949a3c5fa3c613328e1b8256052cbc2327c9b
+  subpackages:
+  - hcl/ast
+  - hcl/parser
+  - hcl/scanner
+  - hcl/strconv
+  - hcl/token
+  - json/parser
+  - json/scanner
+  - json/token
 - name: github.com/hashicorp/yamux
   version: d1caa6c97c9fc1cc9e83bbe34d0603f9ff0ce8bd
+- name: github.com/inconshreveable/mousetrap
+  version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
+- name: github.com/klauspost/compress
+  version: e80ca55b53e5e6f53deed5c7842e7b7da95e1dc7
+  subpackages:
+  - snappy
+- name: github.com/klauspost/cpuid
+  version: 09cded8978dc9e80714c4d85b0322337b0a1e5e0
+- name: github.com/klauspost/reedsolomon
+  version: 5abf0ee302ccf4834e84f63ff74eca3e8b88e4e2
+- name: github.com/lucas-clemente/aes12
+  version: 25700e67be5c860bcc999137275b9ef8b65932bd
+- name: github.com/lucas-clemente/fnv128a
+  version: 393af48d391698c6ae4219566bfbdfef67269997
+- name: github.com/lucas-clemente/quic-go
+  version: 8b351a9b7e5135c53dbdae14235e2fb4e9bdd436
+  subpackages:
+  - ackhandler
+  - congestion
+  - crypto
+  - flowcontrol
+  - frames
+  - h2quic
+  - handshake
+  - protocol
+  - qerr
+  - utils
+- name: github.com/lucas-clemente/quic-go-certificates
+  version: d2f86524cced5186554df90d92529757d22c1cb6
+- name: github.com/magiconair/properties
+  version: 51463bfca2576e06c62a8504b5c0f06d61312647
+- name: github.com/mitchellh/mapstructure
+  version: 53818660ed4955e899c0bcafa97299a388bd7c8e
+- name: github.com/pelletier/go-buffruneio
+  version: c37440a7cf42ac63b919c752ca73a85067e05992
+- name: github.com/pelletier/go-toml
+  version: fe206efb84b2bc8e8cfafe6b4c1826622be969e3
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
-- name: golang.org/x/crypto
-  version: 459e26527287adbc2adcc5d0d49abff9a5f315a7
+- name: github.com/shadowsocks/shadowsocks-go
+  version: 5c6f652e323ffe46b8b417408cd519fc15a11e70
   subpackages:
+  - shadowsocks
+- name: github.com/spf13/afero
+  version: 9be650865eab0c12963d8753212f4f9c66cdcf12
+  subpackages:
+  - mem
+- name: github.com/spf13/cast
+  version: acbeb36b902d72a7a4c18e8f3241075e7ab763e4
+- name: github.com/spf13/cobra
+  version: b6cb3958937245a12d4d7728be080a6c758f4136
+- name: github.com/spf13/jwalterweatherman
+  version: fa7ca7e836cf3a8bb4ebf799f472c12d7e903d66
+- name: github.com/spf13/pflag
+  version: 2300d0f8576fe575f71aaa5b9bbe4e1b0dc2eb51
+- name: github.com/spf13/viper
+  version: 0967fc9aceab2ce9da34061253ac10fb99bba5b2
+- name: github.com/Yawning/chacha20
+  version: c91e78db502ff629614837aacb7aa4efa61c651a
+- name: golang.org/x/crypto
+  version: c2303dcbe84172e0c0da4c9f083eeca54c06f298
+  subpackages:
+  - blowfish
+  - cast5
   - curve25519
   - ed25519
   - ed25519/internal/edwards25519
+  - hkdf
+  - pbkdf2
+  - salsa20
+  - salsa20/salsa
   - ssh
+  - tea
+  - twofish
+  - xtea
 - name: golang.org/x/net
-  version: 6c23252515492caf9b228a9d5cabcdbde29f7f82
+  version: ffcf1bedda3b04ebb15a168a59800a73d6dc0f4d
   subpackages:
-  - context
+  - bpf
+  - http2
+  - http2/hpack
+  - idna
+  - internal/iana
+  - internal/netreflect
+  - ipv4
+  - lex/httplex
+- name: golang.org/x/sys
+  version: f3918c30c5c2cb527c0b071a27c35120a6c0719a
+  subpackages:
+  - unix
+- name: golang.org/x/text
+  version: f4b4367115ec2de254587813edaa901bc1c723a8
+  subpackages:
+  - secure/bidirule
+  - transform
+  - unicode/bidi
+  - unicode/norm
+- name: gopkg.in/gorilla/websocket.v1
+  version: 3ab3a8b8831546bd18fd182c20687ca853b2bb13
+- name: gopkg.in/xtaci/kcp-go.v2
+  version: bf95749e1be2a3f152ba0004eae0c4f47fbf1251
+- name: gopkg.in/xtaci/smux.v1
+  version: a1a5df8f92af764f378f07d6a3dd8eb3f7aa190a
+- name: gopkg.in/yaml.v2
+  version: cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b
 testImports: []

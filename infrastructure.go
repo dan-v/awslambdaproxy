@@ -30,11 +30,75 @@ type LambdaInfrastructure struct {
 	lambdaMemorySize int64
 }
 
-func (infra *LambdaInfrastructure) setup() error {
-	roleArn, err := infra.createIAMLambdaRole(lambdaFunctionIamRole)
+func SetupLambdaInfrastructure() (error) {
+	svc := iam.New(session.New(), &aws.Config{})
+
+	_, err := svc.GetRole(&iam.GetRoleInput{
+		RoleName: aws.String(lambdaFunctionIamRole),
+	})
 	if err != nil {
-		return errors.Wrap(err, "Could not create IAM role")
+		if awsErr, ok := err.(awserr.Error); ok {
+			if awsErr.Code() == "NoSuchEntity" {
+				_, err := svc.CreateRole(&iam.CreateRoleInput{
+					AssumeRolePolicyDocument: aws.String(`{
+					  "Version": "2012-10-17",
+					  "Statement": {
+					    "Effect": "Allow",
+					    "Principal": {"Service": "lambda.amazonaws.com"},
+					    "Action": "sts:AssumeRole"
+					  }
+				    	}`),
+					RoleName: aws.String(lambdaFunctionIamRole),
+					Path:     aws.String("/"),
+				})
+				if err != nil {
+					return err
+				}
+				_, err = svc.PutRolePolicy(&iam.PutRolePolicyInput{
+					PolicyDocument: aws.String(`
+					{
+					  "Version": "2012-10-17",
+					  "Statement": [
+					    {
+					      "Action": [
+						"logs:CreateLogGroup",
+						"logs:CreateLogStream",
+						"logs:PutLogEvents"
+					      ],
+					      "Effect": "Allow",
+					      "Resource": "arn:aws:logs:*:*:*"
+					    }
+					  ]
+					}`),
+					PolicyName: aws.String(lambdaFunctionIamRolePolicyName),
+					RoleName:   aws.String(lambdaFunctionIamRole),
+				})
+				if err != nil {
+					return err
+				}
+
+				return nil
+			}
+		} else {
+			return err
+		}
+	} else {
+		log.Println("Setup has already been run successfully")
+		return nil
 	}
+
+	return nil
+}
+
+func (infra *LambdaInfrastructure) setup() error {
+	svc := iam.New(session.New(), infra.config)
+	resp, err := svc.GetRole(&iam.GetRoleInput{
+		RoleName: aws.String(lambdaFunctionIamRole),
+	})
+	if err != nil {
+		return errors.Wrap(err, "Could not find IAM role " + lambdaFunctionIamRole + ". Probably need to run setup.")
+	}
+	roleArn := *resp.Role.Arn
 	zip, err := Asset(lambdaFunctionZipLocation)
 	if err != nil {
 		return errors.Wrap(err, "Could not read ZIP file: " + lambdaFunctionZipLocation)
