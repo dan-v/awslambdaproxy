@@ -1,11 +1,11 @@
 package awslambdaproxy
 
 import (
-	"io"
-	"sync"
-	"io/ioutil"
 	"bytes"
+	"io"
+	"io/ioutil"
 	"net/http"
+	"sync"
 
 	"github.com/pkg/errors"
 )
@@ -36,12 +36,12 @@ func bidirectionalCopy(src io.ReadWriteCloser, dst io.ReadWriteCloser) {
 func getPublicIp() (string, error) {
 	resp, err := http.Get(getIPUrl)
 	if err != nil {
-		return "", errors.Wrap(err, "Failed to get IP address from " + getIPUrl)
+		return "", errors.Wrap(err, "Failed to get IP address from "+getIPUrl)
 	}
 	defer resp.Body.Close()
 	buf, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", errors.Wrap(err, "Failed to read IP address from " + getIPUrl)
+		return "", errors.Wrap(err, "Failed to read IP address from "+getIPUrl)
 	}
 	return string(bytes.TrimSpace(buf)), nil
 }

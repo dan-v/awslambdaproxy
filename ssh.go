@@ -1,18 +1,18 @@
 package awslambdaproxy
 
 import (
-	"os"
-	"crypto/rsa"
 	"crypto/rand"
-	"golang.org/x/crypto/ssh"
-	"github.com/pkg/errors"
-	"encoding/pem"
+	"crypto/rsa"
 	"crypto/x509"
-	"os/user"
-	"os/signal"
+	"encoding/pem"
+	"github.com/pkg/errors"
+	"golang.org/x/crypto/ssh"
 	"io/ioutil"
-	"strings"
 	"log"
+	"os"
+	"os/signal"
+	"os/user"
+	"strings"
 )
 
 type SSHManager struct {
@@ -22,7 +22,7 @@ type SSHManager struct {
 func (s *SSHManager) getPrivateKeyBytes() []byte {
 	return pem.EncodeToMemory(
 		&pem.Block{
-			Type: "RSA PRIVATE KEY",
+			Type:  "RSA PRIVATE KEY",
 			Bytes: x509.MarshalPKCS1PrivateKey(s.privateKey),
 		},
 	)
@@ -98,7 +98,7 @@ func NewSSHManager() ([]byte, error) {
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
-	go func(){
+	go func() {
 		for sig := range c {
 			log.Println("Shutting down due to ", sig.String())
 			log.Println("Cleaning up authorized_key file ", s.getAuthorizedKeysFile())

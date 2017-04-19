@@ -1,13 +1,13 @@
 package awslambdaproxy
 
 import (
-	"time"
 	"log"
 	"runtime"
+	"time"
 )
 
 func ServerInit(sshUser string, sshPort string, regions []string, memory int64, frequency time.Duration,
-		listeners []string, timeout int64) {
+	listeners []string, timeout int64) {
 	publicIp, err := getPublicIp()
 	if err != nil {
 		log.Fatal("Error getting public IP address", err.Error())

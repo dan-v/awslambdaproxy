@@ -1,8 +1,8 @@
 package awslambdaproxy
 
 import (
-	"log"
 	"github.com/ginuerzh/gost"
+	"log"
 )
 
 const (
@@ -10,11 +10,11 @@ const (
 )
 
 type LocalProxy struct {
-	listeners []string
+	listeners    []string
 	forwardProxy string
 }
 
-func (l *LocalProxy) run(){
+func (l *LocalProxy) run() {
 	chain := gost.NewProxyChain()
 	if err := chain.AddProxyNodeString(l.forwardProxy); err != nil {
 		log.Fatal(err)
@@ -36,7 +36,7 @@ func (l *LocalProxy) run(){
 
 func NewLocalProxy(listeners []string) (*LocalProxy, error) {
 	l := &LocalProxy{
-		listeners: listeners,
+		listeners:    listeners,
 		forwardProxy: forwardProxy,
 	}
 	go l.run()

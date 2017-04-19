@@ -1,9 +1,9 @@
 package awslambdaproxy
 
 import (
+	"log"
 	"net"
 	"sync"
-	"log"
 	"time"
 
 	"github.com/hashicorp/yamux"
@@ -18,10 +18,10 @@ const (
 )
 
 type TunnelConnection struct {
-	conn net.Conn
-	sess *yamux.Session
+	conn    net.Conn
+	sess    *yamux.Session
 	streams map[uint32]*yamux.Stream
-	time time.Time
+	time    time.Time
 }
 
 type ConnectionManager struct {
@@ -32,7 +32,7 @@ type ConnectionManager struct {
 	tunnelExpectedRuntime float64
 	tunnelRedeployNeeded  chan bool
 	activeTunnel          string
-	localProxy	      *LocalProxy
+	localProxy            *LocalProxy
 }
 
 func (t *ConnectionManager) runForwarder() {
@@ -103,7 +103,7 @@ func (t *ConnectionManager) runTunnel() {
 	}
 }
 
-func (t *ConnectionManager) removeTunnelConnection(connectionId string){
+func (t *ConnectionManager) removeTunnelConnection(connectionId string) {
 	t.tunnelConnections[connectionId].sess.Close()
 	t.tunnelConnections[connectionId].conn.Close()
 	t.tunnelMutex.Lock()
@@ -197,7 +197,7 @@ func newTunnelConnectionManager(frequency time.Duration, localProxy *LocalProxy)
 		tunnelConnections:     make(map[string]TunnelConnection),
 		tunnelRedeployNeeded:  make(chan bool),
 		tunnelExpectedRuntime: frequency.Seconds(),
-		localProxy: localProxy,
+		localProxy:            localProxy,
 	}
 
 	go connectionManager.runTunnel()
@@ -211,7 +211,7 @@ func startTunnelListener() (net.Listener, error) {
 	tunnelListener, err := net.Listen("tcp", tunnelAddress)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to start TCP tunnel listener on port " + tunnelPort)
+		return nil, errors.Wrap(err, "Failed to start TCP tunnel listener on port "+tunnelPort)
 	}
 	log.Println("Started tunnel listener on port " + tunnelPort)
 	return tunnelListener, nil
@@ -222,7 +222,7 @@ func startForwardListener() (net.Listener, error) {
 	forwardListener, err := net.Listen("tcp", forwardAddress)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to start TCP user listener on port " + forwardPort)
+		return nil, errors.Wrap(err, "Failed to start TCP user listener on port "+forwardPort)
 	}
 	log.Println("Started user listener on port " + forwardPort)
 	return forwardListener, nil

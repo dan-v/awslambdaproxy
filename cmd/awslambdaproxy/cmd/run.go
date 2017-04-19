@@ -1,25 +1,25 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
-	"os/user"
-	"github.com/dan-v/awslambdaproxy"
-	"time"
-	"github.com/spf13/viper"
-	"strings"
-	"os"
 	"fmt"
+	"github.com/dan-v/awslambdaproxy"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"os"
+	"os/user"
 	"strconv"
+	"strings"
+	"time"
 )
 
 var (
-	frequency time.Duration
-	memory int64
+	frequency                            time.Duration
+	memory                               int64
 	sshUser, sshPort, regions, listeners string
 	// Max execution time on lambda is 300 seconds currently
-	lambdaMaxFrequency 	  = time.Duration(290 * time.Second) // leave 10 seconds of leeway
-	lambdaMinMemorySize       = 128
-	lambdaMaxMemorySize       = 1536
+	lambdaMaxFrequency  = time.Duration(290 * time.Second) // leave 10 seconds of leeway
+	lambdaMinMemorySize = 128
+	lambdaMaxMemorySize = 1536
 )
 
 // runCmd represents the run command
@@ -93,19 +93,19 @@ func getCurrentUserName() string {
 func init() {
 	RootCmd.AddCommand(runCmd)
 
-	runCmd.Flags().StringVarP(&regions, "regions", "r",  "us-west-2","Regions to " +
+	runCmd.Flags().StringVarP(&regions, "regions", "r", "us-west-2", "Regions to "+
 		"run proxy.")
-	runCmd.Flags().DurationVarP(&frequency, "frequency", "f", time.Duration(time.Second * 260), "Frequency " +
-		"to execute Lambda function.  Maximum is " + lambdaMaxFrequency.String() + ". If multiple " +
-		"lambda-regions are specified, this will cause traffic to rotate round robin at the interval " +
+	runCmd.Flags().DurationVarP(&frequency, "frequency", "f", time.Duration(time.Second*260), "Frequency "+
+		"to execute Lambda function.  Maximum is "+lambdaMaxFrequency.String()+". If multiple "+
+		"lambda-regions are specified, this will cause traffic to rotate round robin at the interval "+
 		"specified here.")
-	runCmd.Flags().Int64VarP(&memory, "memory", "m", 128, "Memory size in MB for Lambda function. " +
+	runCmd.Flags().Int64VarP(&memory, "memory", "m", 128, "Memory size in MB for Lambda function. "+
 		"Higher memory may allow for faster network throughput.")
-	runCmd.Flags().StringVarP(&listeners, "listeners", "l",  "admin:awslambdaproxy@:8080","Add as many listeners" +
+	runCmd.Flags().StringVarP(&listeners, "listeners", "l", "admin:awslambdaproxy@:8080", "Add as many listeners"+
 		"as you'd like.")
-	runCmd.Flags().StringVarP(&sshUser, "ssh-user", "",  getCurrentUserName(),"SSH user for tunnel " +
+	runCmd.Flags().StringVarP(&sshUser, "ssh-user", "", getCurrentUserName(), "SSH user for tunnel "+
 		"connections from Lambda.")
-	runCmd.Flags().StringVarP(&sshPort, "ssh-port", "",  "22","SSH port for tunnel " +
+	runCmd.Flags().StringVarP(&sshPort, "ssh-port", "", "22", "SSH port for tunnel "+
 		"connections from Lambda.")
 
 	viper.BindPFlag("regions", runCmd.Flags().Lookup("regions"))

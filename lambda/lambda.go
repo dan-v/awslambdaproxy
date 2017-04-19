@@ -1,9 +1,9 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
-	"flag"
 )
 
 func LambdaInit(tunnelHost string, sshPort string, sshPrivateKeyFile string, sshUsername string) {
@@ -13,7 +13,7 @@ func LambdaInit(tunnelHost string, sshPort string, sshPrivateKeyFile string, ssh
 	log.Println("Establishing tunnel connection to", tunnelHost)
 	lambdaTunnelConnection, err := setupLambdaTunnelConnection(tunnelHost, sshPort, sshUsername, sshPrivateKeyFile)
 	if err != nil {
-		log.Fatal("Failed to establish connection to " + tunnelHost,  err)
+		log.Fatal("Failed to establish connection to "+tunnelHost, err)
 	}
 
 	log.Println("Starting LambdaDataCopyManager")
@@ -48,4 +48,3 @@ func main() {
 
 	LambdaInit(*addressPtr, *sshPortPtr, *sshPrivateKeyFilePtr, *sshUsernamePtr)
 }
-
