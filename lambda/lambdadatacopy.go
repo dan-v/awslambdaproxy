@@ -1,17 +1,17 @@
 package main
 
 import (
-	"os"
+	"io"
 	"log"
 	"net"
-	"io"
+	"os"
 	"sync"
 	"time"
 )
 
 type LambdaDataCopyManager struct {
 	lambdaTunnelConnection *LambdaTunnelConnection
-	lambdaProxyServer *LambdaProxyServer
+	lambdaProxyServer      *LambdaProxyServer
 }
 
 func (l *LambdaDataCopyManager) run() {
@@ -38,7 +38,7 @@ func (l *LambdaDataCopyManager) run() {
 func newLambdaDataCopyManager(p *LambdaProxyServer, t *LambdaTunnelConnection) *LambdaDataCopyManager {
 	return &LambdaDataCopyManager{
 		lambdaTunnelConnection: t,
-		lambdaProxyServer: p,
+		lambdaProxyServer:      p,
 	}
 }
 

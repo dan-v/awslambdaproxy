@@ -3,24 +3,24 @@ package awslambdaproxy
 // majority of this is borrowed from https://github.com/goadapp/goad/blob/master/infrastructure/infrastructure.go
 
 import (
-	"time"
 	"log"
+	"time"
 
-	"github.com/pkg/errors"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/pkg/errors"
 )
 
 const (
-	lambdaFunctionName = "awslambdaproxy"
-	lambdaFunctionHandler = "main.handler"
-	lambdaFunctionRuntime = "python2.7"
-	lambdaFunctionIamRole = "awslambdaproxy-role"
+	lambdaFunctionName              = "awslambdaproxy"
+	lambdaFunctionHandler           = "main.handler"
+	lambdaFunctionRuntime           = "python2.7"
+	lambdaFunctionIamRole           = "awslambdaproxy-role"
 	lambdaFunctionIamRolePolicyName = "awslambdaproxy-role-policy"
-	lambdaFunctionZipLocation = "data/lambda.zip"
+	lambdaFunctionZipLocation       = "data/lambda.zip"
 )
 
 type LambdaInfrastructure struct {
@@ -30,7 +30,7 @@ type LambdaInfrastructure struct {
 	lambdaMemorySize int64
 }
 
-func SetupLambdaInfrastructure() (error) {
+func SetupLambdaInfrastructure() error {
 	svc := iam.New(session.New(), &aws.Config{})
 
 	_, err := svc.GetRole(&iam.GetRoleInput{
@@ -96,24 +96,24 @@ func (infra *LambdaInfrastructure) setup() error {
 		RoleName: aws.String(lambdaFunctionIamRole),
 	})
 	if err != nil {
-		return errors.Wrap(err, "Could not find IAM role " + lambdaFunctionIamRole + ". Probably need to run setup.")
+		return errors.Wrap(err, "Could not find IAM role "+lambdaFunctionIamRole+". Probably need to run setup.")
 	}
 	roleArn := *resp.Role.Arn
 	zip, err := Asset(lambdaFunctionZipLocation)
 	if err != nil {
-		return errors.Wrap(err, "Could not read ZIP file: " + lambdaFunctionZipLocation)
+		return errors.Wrap(err, "Could not read ZIP file: "+lambdaFunctionZipLocation)
 	}
 	for _, region := range infra.regions {
 		log.Println("Setting up Lambda function in region: " + region)
 		err = infra.createOrUpdateLambdaFunction(region, roleArn, zip)
 		if err != nil {
-			return errors.Wrap(err, "Could not create Lambda function in region " + region)
+			return errors.Wrap(err, "Could not create Lambda function in region "+region)
 		}
 	}
 	return nil
 }
 
-func setupLambdaInfrastructure(regions []string, memorySize int64, timeout int64) (error) {
+func setupLambdaInfrastructure(regions []string, memorySize int64, timeout int64) error {
 	infra := LambdaInfrastructure{
 		regions:          regions,
 		config:           &aws.Config{},

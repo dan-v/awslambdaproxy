@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"github.com/dan-v/awslambdaproxy/cmd/awslambdaproxy/cmd"
+	"os"
 )
 
 func main() {
