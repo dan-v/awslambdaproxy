@@ -1,9 +1,9 @@
 package main
 
 import (
+	"log"
 	"net"
 	"os"
-	"log"
 
 	"github.com/hashicorp/yamux"
 	"golang.org/x/crypto/ssh"
@@ -15,11 +15,11 @@ const (
 )
 
 type LambdaTunnelConnection struct {
-	tunnelHost string
+	tunnelHost  string
 	sshUsername string
-	sshSigner ssh.Signer
-	conn net.Conn
-	sess *yamux.Session
+	sshSigner   ssh.Signer
+	conn        net.Conn
+	sess        *yamux.Session
 }
 
 func (l *LambdaTunnelConnection) publicKeyFile() ssh.AuthMethod {
@@ -28,7 +28,7 @@ func (l *LambdaTunnelConnection) publicKeyFile() ssh.AuthMethod {
 
 func (l *LambdaTunnelConnection) setup() {
 	sshConfig := &ssh.ClientConfig{
-		User: l.sshUsername,
+		User:            l.sshUsername,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Auth: []ssh.AuthMethod{
 			l.publicKeyFile(),
@@ -37,14 +37,14 @@ func (l *LambdaTunnelConnection) setup() {
 
 	tunnelConn, err := ssh.Dial("tcp", l.tunnelHost, sshConfig)
 	if err != nil {
-		log.Println("Failed to start SSH tunnel to: " + l.tunnelHost + ". Error: ", err)
+		log.Println("Failed to start SSH tunnel to: "+l.tunnelHost+". Error: ", err)
 		os.Exit(1)
 	}
 	log.Println("Created SSH tunnel to: " + l.tunnelHost)
 
 	localConn, err := tunnelConn.Dial("tcp", remoteTunnelPort)
 	if err != nil {
-		log.Println("Failed to create local tunnel to " + remoteTunnelPort, err)
+		log.Println("Failed to create local tunnel to "+remoteTunnelPort, err)
 		os.Exit(1)
 	}
 	l.conn = localConn
@@ -60,7 +60,7 @@ func (l *LambdaTunnelConnection) setup() {
 }
 
 func setupLambdaTunnelConnection(tunnelHost string, sshPort string, sshUsername string,
-					sshPrivateKeyFile string) (*LambdaTunnelConnection, error) {
+	sshPrivateKeyFile string) (*LambdaTunnelConnection, error) {
 	data, err := ioutil.ReadFile(sshPrivateKeyFile)
 	if err != nil {
 		log.Println("Failed to read private key file", sshPrivateKeyFile)
@@ -73,9 +73,9 @@ func setupLambdaTunnelConnection(tunnelHost string, sshPort string, sshUsername 
 	}
 
 	tunnel := &LambdaTunnelConnection{
-		tunnelHost: tunnelHost + ":" + sshPort,
+		tunnelHost:  tunnelHost + ":" + sshPort,
 		sshUsername: sshUsername,
-		sshSigner: signer,
+		sshSigner:   signer,
 	}
 
 	tunnel.setup()

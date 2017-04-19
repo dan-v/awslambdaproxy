@@ -1,9 +1,9 @@
 package awslambdaproxy
 
 import (
-	"time"
 	"encoding/json"
 	"log"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -12,19 +12,19 @@ import (
 )
 
 type LambdaExecutionManager struct {
-	regions []string
+	regions   []string
 	frequency time.Duration
-	publicIp string
-	sshPort string
-	sshKey string
-	sshUser string
+	publicIp  string
+	sshPort   string
+	sshKey    string
+	sshUser   string
 }
 
 type LambdaPayload struct {
 	ConnectBackAddress string
-	SSHPort string
-	SSHKey string
-	SSHUser string
+	SSHPort            string
+	SSHKey             string
+	SSHUser            string
 }
 
 func (l *LambdaExecutionManager) run() {
@@ -44,9 +44,9 @@ func (l *LambdaExecutionManager) executeFunction(region int) error {
 	svc := lambda.New(sess, &aws.Config{Region: aws.String(l.regions[region])})
 	lambdaPayload := LambdaPayload{
 		ConnectBackAddress: l.publicIp,
-		SSHPort: l.sshPort,
-		SSHKey: l.sshKey,
-		SSHUser: l.sshUser,
+		SSHPort:            l.sshPort,
+		SSHKey:             l.sshKey,
+		SSHUser:            l.sshUser,
 	}
 	payload, _ := json.Marshal(lambdaPayload)
 	params := &lambda.InvokeInput{
@@ -62,18 +62,18 @@ func (l *LambdaExecutionManager) executeFunction(region int) error {
 }
 
 func newLambdaExecutionManager(publicIp string, regions []string, frequency time.Duration, sshUser string, sshPort string,
-				privateKey []byte, onDemandExecution chan bool) (*LambdaExecutionManager, error) {
+	privateKey []byte, onDemandExecution chan bool) (*LambdaExecutionManager, error) {
 	executionManager := &LambdaExecutionManager{
-		regions: regions,
+		regions:   regions,
 		frequency: frequency,
-		publicIp: publicIp,
-		sshPort: sshPort,
-		sshKey: string(privateKey[:]),
-		sshUser: sshUser,
+		publicIp:  publicIp,
+		sshPort:   sshPort,
+		sshKey:    string(privateKey[:]),
+		sshUser:   sshUser,
 	}
 	go executionManager.run()
 
-	go func(){
+	go func() {
 		for {
 			<-onDemandExecution
 			log.Println("Starting new tunnel as existing tunnel failed")

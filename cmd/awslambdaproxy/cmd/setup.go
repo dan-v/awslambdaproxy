@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
-	"github.com/dan-v/awslambdaproxy"
 	"fmt"
+	"github.com/dan-v/awslambdaproxy"
+	"github.com/spf13/cobra"
 	"os"
 )
 
