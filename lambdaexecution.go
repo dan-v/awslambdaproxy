@@ -11,24 +11,24 @@ import (
 	"github.com/pkg/errors"
 )
 
-type LambdaExecutionManager struct {
+type lambdaExecutionManager struct {
 	regions   []string
 	frequency time.Duration
-	publicIp  string
+	publicIP  string
 	sshPort   string
 	sshKey    string
 	sshUser   string
 }
 
-type LambdaPayload struct {
+type lambdaPayload struct {
 	ConnectBackAddress string
 	SSHPort            string
 	SSHKey             string
 	SSHUser            string
 }
 
-func (l *LambdaExecutionManager) run() {
-	log.Println("Using public IP", l.publicIp)
+func (l *lambdaExecutionManager) run() {
+	log.Println("Using public IP", l.publicIP)
 	log.Println("Lambda execution frequency", l.frequency)
 	for {
 		for region := range l.regions {
@@ -38,12 +38,12 @@ func (l *LambdaExecutionManager) run() {
 	}
 }
 
-func (l *LambdaExecutionManager) executeFunction(region int) error {
+func (l *lambdaExecutionManager) executeFunction(region int) error {
 	log.Println("Executing Lambda function in region", l.regions[region])
 	sess := session.New(&aws.Config{})
 	svc := lambda.New(sess, &aws.Config{Region: aws.String(l.regions[region])})
-	lambdaPayload := LambdaPayload{
-		ConnectBackAddress: l.publicIp,
+	lambdaPayload := lambdaPayload{
+		ConnectBackAddress: l.publicIP,
 		SSHPort:            l.sshPort,
 		SSHKey:             l.sshKey,
 		SSHUser:            l.sshUser,
@@ -61,12 +61,12 @@ func (l *LambdaExecutionManager) executeFunction(region int) error {
 	return nil
 }
 
-func newLambdaExecutionManager(publicIp string, regions []string, frequency time.Duration, sshUser string, sshPort string,
-	privateKey []byte, onDemandExecution chan bool) (*LambdaExecutionManager, error) {
-	executionManager := &LambdaExecutionManager{
+func newLambdaExecutionManager(publicIP string, regions []string, frequency time.Duration, sshUser string, sshPort string,
+	privateKey []byte, onDemandExecution chan bool) (*lambdaExecutionManager, error) {
+	executionManager := &lambdaExecutionManager{
 		regions:   regions,
 		frequency: frequency,
-		publicIp:  publicIp,
+		publicIP:  publicIP,
 		sshPort:   sshPort,
 		sshKey:    string(privateKey[:]),
 		sshUser:   sshUser,

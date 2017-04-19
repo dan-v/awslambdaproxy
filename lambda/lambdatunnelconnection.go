@@ -14,7 +14,7 @@ const (
 	remoteTunnelPort = "localhost:8081"
 )
 
-type LambdaTunnelConnection struct {
+type lambdaTunnelConnection struct {
 	tunnelHost  string
 	sshUsername string
 	sshSigner   ssh.Signer
@@ -22,11 +22,11 @@ type LambdaTunnelConnection struct {
 	sess        *yamux.Session
 }
 
-func (l *LambdaTunnelConnection) publicKeyFile() ssh.AuthMethod {
+func (l *lambdaTunnelConnection) publicKeyFile() ssh.AuthMethod {
 	return ssh.PublicKeys(l.sshSigner)
 }
 
-func (l *LambdaTunnelConnection) setup() {
+func (l *lambdaTunnelConnection) setup() {
 	sshConfig := &ssh.ClientConfig{
 		User:            l.sshUsername,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
@@ -60,7 +60,7 @@ func (l *LambdaTunnelConnection) setup() {
 }
 
 func setupLambdaTunnelConnection(tunnelHost string, sshPort string, sshUsername string,
-	sshPrivateKeyFile string) (*LambdaTunnelConnection, error) {
+	sshPrivateKeyFile string) (*lambdaTunnelConnection, error) {
 	data, err := ioutil.ReadFile(sshPrivateKeyFile)
 	if err != nil {
 		log.Println("Failed to read private key file", sshPrivateKeyFile)
@@ -72,7 +72,7 @@ func setupLambdaTunnelConnection(tunnelHost string, sshPort string, sshUsername 
 		return nil, err
 	}
 
-	tunnel := &LambdaTunnelConnection{
+	tunnel := &lambdaTunnelConnection{
 		tunnelHost:  tunnelHost + ":" + sshPort,
 		sshUsername: sshUsername,
 		sshSigner:   signer,
