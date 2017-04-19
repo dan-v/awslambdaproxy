@@ -9,6 +9,7 @@ const (
 	forwardProxy = "socks5://localhost:8082"
 )
 
+// LocalProxy is proxy listener and where to forward
 type LocalProxy struct {
 	listeners    []string
 	forwardProxy string
@@ -34,6 +35,7 @@ func (l *LocalProxy) run() {
 	}
 }
 
+// NewLocalProxy starts a local proxy that will forward to proxy running in Lambda
 func NewLocalProxy(listeners []string) (*LocalProxy, error) {
 	l := &LocalProxy{
 		listeners:    listeners,

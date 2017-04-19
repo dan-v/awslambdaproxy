@@ -6,11 +6,11 @@ import (
 	"github.com/ginuerzh/gost"
 )
 
-type LambdaProxyServer struct {
+type lambdaProxyServer struct {
 	port string
 }
 
-func (l *LambdaProxyServer) run() {
+func (l *lambdaProxyServer) run() {
 	chain := gost.NewProxyChain()
 	if err := chain.AddProxyNodeString(); err != nil {
 		log.Fatal(err)
@@ -26,9 +26,9 @@ func (l *LambdaProxyServer) run() {
 	log.Fatal(server.Serve())
 }
 
-func startLambdaProxyServer() *LambdaProxyServer {
+func startLambdaProxyServer() *lambdaProxyServer {
 	port := ":8080"
-	server := &LambdaProxyServer{
+	server := &lambdaProxyServer{
 		port: port,
 	}
 	go server.run()

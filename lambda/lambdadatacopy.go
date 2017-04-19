@@ -9,12 +9,12 @@ import (
 	"time"
 )
 
-type LambdaDataCopyManager struct {
-	lambdaTunnelConnection *LambdaTunnelConnection
-	lambdaProxyServer      *LambdaProxyServer
+type lambdaDataCopyManager struct {
+	lambdaTunnelConnection *lambdaTunnelConnection
+	lambdaProxyServer      *lambdaProxyServer
 }
 
-func (l *LambdaDataCopyManager) run() {
+func (l *lambdaDataCopyManager) run() {
 	for {
 		proxySocketConn, proxySocketErr := net.Dial("tcp", l.lambdaProxyServer.port)
 		if proxySocketErr != nil {
@@ -35,8 +35,8 @@ func (l *LambdaDataCopyManager) run() {
 	}
 }
 
-func newLambdaDataCopyManager(p *LambdaProxyServer, t *LambdaTunnelConnection) *LambdaDataCopyManager {
-	return &LambdaDataCopyManager{
+func newLambdaDataCopyManager(p *lambdaProxyServer, t *lambdaTunnelConnection) *lambdaDataCopyManager {
+	return &lambdaDataCopyManager{
 		lambdaTunnelConnection: t,
 		lambdaProxyServer:      p,
 	}

@@ -17,17 +17,17 @@ const (
 	tunnelPort  = "8081"
 )
 
-type TunnelConnection struct {
+type tunnelConnection struct {
 	conn    net.Conn
 	sess    *yamux.Session
 	streams map[uint32]*yamux.Stream
 	time    time.Time
 }
 
-type ConnectionManager struct {
+type connectionManager struct {
 	forwardListener       net.Listener
 	tunnelListener        net.Listener
-	tunnelConnections     map[string]TunnelConnection
+	tunnelConnections     map[string]tunnelConnection
 	tunnelMutex           sync.RWMutex
 	tunnelExpectedRuntime float64
 	tunnelRedeployNeeded  chan bool
@@ -35,7 +35,7 @@ type ConnectionManager struct {
 	localProxy            *LocalProxy
 }
 
-func (t *ConnectionManager) runForwarder() {
+func (t *connectionManager) runForwarder() {
 	t.waitUntilTunnelIsAvailable()
 	for {
 		c, err := t.forwardListener.Accept()
@@ -47,7 +47,7 @@ func (t *ConnectionManager) runForwarder() {
 	}
 }
 
-func (t *ConnectionManager) handleForwardConnection(localProxyConn net.Conn) {
+func (t *connectionManager) handleForwardConnection(localProxyConn net.Conn) {
 	tunnelStream, err := t.openNewStreamInActiveTunnel()
 	if err != nil {
 		log.Println("Failed to open new stream in active tunnel", err)
@@ -57,7 +57,7 @@ func (t *ConnectionManager) handleForwardConnection(localProxyConn net.Conn) {
 	bidirectionalCopy(localProxyConn, tunnelStream)
 }
 
-func (t *ConnectionManager) runTunnel() {
+func (t *connectionManager) runTunnel() {
 	for {
 		if len(t.tunnelConnections) > maxTunnels {
 			log.Println("Too many active tunnelConnections: " + string(len(t.tunnelConnections)) + ". MAX=" +
@@ -83,7 +83,7 @@ func (t *ConnectionManager) runTunnel() {
 
 		t.tunnelMutex.Lock()
 		t.activeTunnel = c.RemoteAddr().String()
-		t.tunnelConnections[t.activeTunnel] = TunnelConnection{
+		t.tunnelConnections[t.activeTunnel] = tunnelConnection{
 			conn:    c,
 			sess:    tunnelSession,
 			streams: make(map[uint32]*yamux.Stream),
@@ -103,43 +103,43 @@ func (t *ConnectionManager) runTunnel() {
 	}
 }
 
-func (t *ConnectionManager) removeTunnelConnection(connectionId string) {
-	t.tunnelConnections[connectionId].sess.Close()
-	t.tunnelConnections[connectionId].conn.Close()
+func (t *connectionManager) removeTunnelConnection(connectionID string) {
+	t.tunnelConnections[connectionID].sess.Close()
+	t.tunnelConnections[connectionID].conn.Close()
 	t.tunnelMutex.Lock()
-	delete(t.tunnelConnections, connectionId)
+	delete(t.tunnelConnections, connectionID)
 	t.tunnelMutex.Unlock()
 }
 
-func (t *ConnectionManager) monitorTunnelSessionHealth(connectionId string) {
+func (t *connectionManager) monitorTunnelSessionHealth(connectionID string) {
 	for {
-		_, err := t.tunnelConnections[connectionId].sess.Ping()
+		_, err := t.tunnelConnections[connectionID].sess.Ping()
 		if err != nil {
-			if time.Since(t.tunnelConnections[connectionId].time).Seconds() < t.tunnelExpectedRuntime {
-				log.Println("Signaling for emergency tunnel due to tunnel ending early: ", time.Since(t.tunnelConnections[connectionId].time).Seconds())
+			if time.Since(t.tunnelConnections[connectionID].time).Seconds() < t.tunnelExpectedRuntime {
+				log.Println("Signaling for emergency tunnel due to tunnel ending early: ", time.Since(t.tunnelConnections[connectionID].time).Seconds())
 				t.tunnelRedeployNeeded <- true
 			}
-			t.removeTunnelConnection(connectionId)
+			t.removeTunnelConnection(connectionID)
 			break
 		}
-		if time.Since(t.tunnelConnections[connectionId].time).Seconds() > t.tunnelExpectedRuntime {
-			numStreams := t.tunnelConnections[connectionId].sess.NumStreams()
+		if time.Since(t.tunnelConnections[connectionID].time).Seconds() > t.tunnelExpectedRuntime {
+			numStreams := t.tunnelConnections[connectionID].sess.NumStreams()
 			if numStreams > 0 {
-				log.Println("Tunnel " + connectionId + " that is being closed still has open streams: " + strconv.Itoa(numStreams) + ". Delaying cleanup.")
+				log.Println("Tunnel " + connectionID + " that is being closed still has open streams: " + strconv.Itoa(numStreams) + ". Delaying cleanup.")
 				time.Sleep(20 * time.Second)
-				log.Println("Delayed cleanup now running for ", connectionId)
+				log.Println("Delayed cleanup now running for ", connectionID)
 			} else {
-				log.Println("Tunnel " + connectionId + " is safe to close")
+				log.Println("Tunnel " + connectionID + " is safe to close")
 			}
-			log.Println("Removing tunnel", connectionId)
-			t.removeTunnelConnection(connectionId)
+			log.Println("Removing tunnel", connectionID)
+			t.removeTunnelConnection(connectionID)
 			break
 		}
 		time.Sleep(time.Millisecond * 50)
 	}
 }
 
-func (t *ConnectionManager) openNewStreamInActiveTunnel() (*yamux.Stream, error) {
+func (t *connectionManager) openNewStreamInActiveTunnel() (*yamux.Stream, error) {
 	for {
 		t.tunnelMutex.RLock()
 		tunnel, ok := t.tunnelConnections[t.activeTunnel]
@@ -154,7 +154,7 @@ func (t *ConnectionManager) openNewStreamInActiveTunnel() (*yamux.Stream, error)
 	}
 }
 
-func (t *ConnectionManager) waitUntilTunnelIsAvailable() error {
+func (t *connectionManager) waitUntilTunnelIsAvailable() error {
 	timeout := time.After(time.Second * time.Duration(t.tunnelExpectedRuntime))
 	tick := time.Tick(time.Second)
 	for {
@@ -165,22 +165,20 @@ func (t *ConnectionManager) waitUntilTunnelIsAvailable() error {
 		case <-tick:
 			if t.isReady() == true {
 				return nil
-			} else {
-				log.Println("Waiting for tunnel to be established..")
 			}
+			log.Println("Waiting for tunnel to be established..")
 		}
 	}
 }
 
-func (t *ConnectionManager) isReady() bool {
+func (t *connectionManager) isReady() bool {
 	if t.activeTunnel == "" {
 		return false
-	} else {
-		return true
 	}
+	return true
 }
 
-func newTunnelConnectionManager(frequency time.Duration, localProxy *LocalProxy) (*ConnectionManager, error) {
+func newTunnelConnectionManager(frequency time.Duration, localProxy *LocalProxy) (*connectionManager, error) {
 	forwardListener, err := startForwardListener()
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to start UserListener")
@@ -191,10 +189,10 @@ func newTunnelConnectionManager(frequency time.Duration, localProxy *LocalProxy)
 		return nil, errors.Wrap(err, "Failed to start TunnelListener")
 	}
 
-	connectionManager := &ConnectionManager{
+	connectionManager := &connectionManager{
 		forwardListener:       forwardListener,
 		tunnelListener:        tunnelListener,
-		tunnelConnections:     make(map[string]TunnelConnection),
+		tunnelConnections:     make(map[string]tunnelConnection),
 		tunnelRedeployNeeded:  make(chan bool),
 		tunnelExpectedRuntime: frequency.Seconds(),
 		localProxy:            localProxy,

@@ -6,8 +6,8 @@ import (
 	"os"
 )
 
-func LambdaInit(tunnelHost string, sshPort string, sshPrivateKeyFile string, sshUsername string) {
-	log.Println("Starting LambdaProxyServer")
+func lambdaInit(tunnelHost string, sshPort string, sshPrivateKeyFile string, sshUsername string) {
+	log.Println("Starting lambdaProxyServer")
 	lambdaProxyServer := startLambdaProxyServer()
 
 	log.Println("Establishing tunnel connection to", tunnelHost)
@@ -16,7 +16,7 @@ func LambdaInit(tunnelHost string, sshPort string, sshPrivateKeyFile string, ssh
 		log.Fatal("Failed to establish connection to "+tunnelHost, err)
 	}
 
-	log.Println("Starting LambdaDataCopyManager")
+	log.Println("Starting lambdaDataCopyManager")
 	dataCopyManager := newLambdaDataCopyManager(lambdaProxyServer, lambdaTunnelConnection)
 	dataCopyManager.run()
 }
@@ -46,5 +46,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	LambdaInit(*addressPtr, *sshPortPtr, *sshPrivateKeyFilePtr, *sshUsernamePtr)
+	lambdaInit(*addressPtr, *sshPortPtr, *sshPrivateKeyFilePtr, *sshUsernamePtr)
 }
