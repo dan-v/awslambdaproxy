@@ -33,7 +33,7 @@ func bidirectionalCopy(src io.ReadWriteCloser, dst io.ReadWriteCloser) {
 	wg.Wait()
 }
 
-func getPublicIp() (string, error) {
+func getPublicIP() (string, error) {
 	resp, err := http.Get(getIPUrl)
 	if err != nil {
 		return "", errors.Wrap(err, "Failed to get IP address from "+getIPUrl)

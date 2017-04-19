@@ -6,9 +6,10 @@ import (
 	"time"
 )
 
+// ServerInit is the main entrypoint for the server portion of awslambdaproxy
 func ServerInit(sshUser string, sshPort string, regions []string, memory int64, frequency time.Duration,
 	listeners []string, timeout int64) {
-	publicIp, err := getPublicIp()
+	publicIP, err := getPublicIP()
 	if err != nil {
 		log.Fatal("Error getting public IP address", err.Error())
 	}
@@ -19,10 +20,10 @@ func ServerInit(sshUser string, sshPort string, regions []string, memory int64, 
 		log.Fatal("Failed to setup Lambda infrastructure", err.Error())
 	}
 
-	log.Println("Starting SSHManager")
+	log.Println("Starting sshManager")
 	privateKey, err := NewSSHManager()
 	if err != nil {
-		log.Fatal("Failed to setup SSHManager", err.Error())
+		log.Fatal("Failed to setup sshManager", err.Error())
 	}
 
 	localProxy, err := NewLocalProxy(listeners)
@@ -30,21 +31,21 @@ func ServerInit(sshUser string, sshPort string, regions []string, memory int64, 
 		log.Fatal("Failed to setup LocalProxy", err.Error())
 	}
 
-	log.Println("Starting ConnectionManager")
+	log.Println("Starting connectionManager")
 	tunnelConnectionManager, err := newTunnelConnectionManager(frequency, localProxy)
 	if err != nil {
-		log.Fatal("Failed to setup ConnectionManager", err.Error())
+		log.Fatal("Failed to setup connectionManager", err.Error())
 	}
 
-	log.Println("Starting LambdaExecutionManager")
-	_, err = newLambdaExecutionManager(publicIp, regions, frequency,
+	log.Println("Starting lambdaExecutionManager")
+	_, err = newLambdaExecutionManager(publicIP, regions, frequency,
 		sshUser, sshPort, privateKey, tunnelConnectionManager.tunnelRedeployNeeded)
 	if err != nil {
-		log.Fatal("Failed to setup LambdaExecutionManager", err.Error())
+		log.Fatal("Failed to setup lambdaExecutionManager", err.Error())
 	}
 
 	log.Println("#######################################")
-	log.Println("Proxy IP: ", publicIp)
+	log.Println("Proxy IP: ", publicIP)
 	log.Println("Listeners: ", listeners)
 	log.Println("#######################################")
 

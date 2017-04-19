@@ -2,8 +2,9 @@ package awslambdaproxy
 
 import "strings"
 
-const Version = "0.0.4"
+const version = "0.0.4"
 
+// LambdaVersion is version of awslambdaproxy
 func LambdaVersion() string {
-	return "v" + strings.Replace(Version, ".", "-", -1)
+	return "v" + strings.Replace(version, ".", "-", -1)
 }

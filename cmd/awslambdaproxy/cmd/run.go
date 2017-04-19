@@ -42,8 +42,8 @@ export AWS_SECRET_ACCESS_KEY=YYYYYYYYYYYYYYYYYYYYYY
 ./awslambdaproxy run -r us-west-2 -m 512
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		aSshUser := viper.GetString("ssh-user")
-		aSshPort := viper.GetString("ssh-port")
+		aSSHUser := viper.GetString("ssh-user")
+		aSSHPort := viper.GetString("ssh-port")
 		aRegions := strings.Split(viper.GetString("regions"), ",")
 		aMemory := viper.GetInt64("memory")
 		aFrequency := viper.GetDuration("frequency")
@@ -78,7 +78,7 @@ export AWS_SECRET_ACCESS_KEY=YYYYYYYYYYYYYYYYYYYYYY
 			os.Exit(1)
 		}
 
-		awslambdaproxy.ServerInit(aSshUser, aSshPort, aRegions, aMemory, aFrequency, aListeners, aTimeout)
+		awslambdaproxy.ServerInit(aSSHUser, aSSHPort, aRegions, aMemory, aFrequency, aListeners, aTimeout)
 	},
 }
 

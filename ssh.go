@@ -15,11 +15,11 @@ import (
 	"strings"
 )
 
-type SSHManager struct {
+type sshManager struct {
 	privateKey *rsa.PrivateKey
 }
 
-func (s *SSHManager) getPrivateKeyBytes() []byte {
+func (s *sshManager) getPrivateKeyBytes() []byte {
 	return pem.EncodeToMemory(
 		&pem.Block{
 			Type:  "RSA PRIVATE KEY",
@@ -28,16 +28,16 @@ func (s *SSHManager) getPrivateKeyBytes() []byte {
 	)
 }
 
-func (s *SSHManager) getPublicKeyBytes() []byte {
+func (s *sshManager) getPublicKeyBytes() []byte {
 	publicKey, _ := ssh.NewPublicKey(&s.privateKey.PublicKey)
 	return ssh.MarshalAuthorizedKey(publicKey)
 }
 
-func (s *SSHManager) getPublicKeyString() string {
+func (s *sshManager) getPublicKeyString() string {
 	return strings.Trim(string(s.getPublicKeyBytes()[:]), "\n")
 }
 
-func (s *SSHManager) insertAuthorizedKey() error {
+func (s *sshManager) insertAuthorizedKey() error {
 	f, err := os.OpenFile(s.getAuthorizedKeysFile(), os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0600)
 	if err != nil {
 		return errors.Wrap(err, "Failed to open authorized_keys file")
@@ -50,7 +50,7 @@ func (s *SSHManager) insertAuthorizedKey() error {
 	return nil
 }
 
-func (s *SSHManager) removeAuthorizedKey() error {
+func (s *sshManager) removeAuthorizedKey() error {
 	authorizedKeysBytes, err := ioutil.ReadFile(s.getAuthorizedKeysFile())
 	if err != nil {
 		errors.Wrap(err, "Failed to read authorized_keys file")
@@ -75,17 +75,18 @@ func (s *SSHManager) removeAuthorizedKey() error {
 	return nil
 }
 
-func (s *SSHManager) getAuthorizedKeysFile() string {
+func (s *sshManager) getAuthorizedKeysFile() string {
 	usr, _ := user.Current()
 	return usr.HomeDir + "/.ssh/authorized_keys"
 }
 
+// NewSSHManager generates an ssh key and adds to authorized_keys so Lambda can connect to the host
 func NewSSHManager() ([]byte, error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error generating private SSH key")
 	}
-	s := &SSHManager{
+	s := &sshManager{
 		privateKey: privateKey,
 	}
 	log.Println("Generated SSH key: ", s.getPublicKeyString())
