@@ -25,7 +25,7 @@ The easiest way is to download a pre-built binary from the [GitHub Releases](htt
 ## Usage
 
 1. Copy `awslambdaproxy` binary to a publicly accessible linux host (e.g. EC2 instance, VPS instance, etc). You will need to open the following ports on this host:
-
+    * Port 22 - functions executing in AWS Lambda will open SSH connections back to the host running `awslambdaproxy`, so this port needs to be open to the world. The SSH key used here is dynamically generated at startup and added to the running users authorized_keys file.
     * Port 8080 - the default configuration will start a HTTP/SOCKS proxy listener on this port with default user/password authentication. If you don't want to publicly expose the proxy server, one option is to setup your own VPN server (e.g. [dosxvpn](https://github.com/dan-v/dosxvpn) or [algo](https://github.com/trailofbits/algo)), connect to it, and just run awslambdaproxy with the proxy listener only on localhost (-l localhost:8080).
 
 2. Optional, but I'd highly recommend taking a look at the Minimal IAM Policies section below. This will get you scoped access keys for running setup and run commands. Otherwise, if you don't care about security you can always use an access key with full administrator privileges.
