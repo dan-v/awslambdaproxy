@@ -682,3 +682,163 @@ func TestSerializationErrConnectionReset(t *testing.T) {
 		t.Errorf("Expected '6', but received %d", count)
 	}
 }
+
+type testRetryer struct {
+	shouldRetry bool
+}
+
+func (d *testRetryer) MaxRetries() int {
+	return 3
+}
+
+// RetryRules returns the delay duration before retrying this request again
+func (d *testRetryer) RetryRules(r *request.Request) time.Duration {
+	return time.Duration(time.Millisecond)
+}
+
+func (d *testRetryer) ShouldRetry(r *request.Request) bool {
+	d.shouldRetry = true
+	if r.Retryable != nil {
+		return *r.Retryable
+	}
+
+	if r.HTTPResponse.StatusCode >= 500 {
+		return true
+	}
+	return r.IsErrorRetryable()
+}
+
+func TestEnforceShouldRetryCheck(t *testing.T) {
+	tp := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		ResponseHeaderTimeout: 1 * time.Millisecond,
+	}
+
+	client := &http.Client{Transport: tp}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// This server should wait forever. Requests will timeout and the SDK should
+		// attempt to retry.
+		select {}
+	}))
+
+	retryer := &testRetryer{}
+	s := awstesting.NewClient(&aws.Config{
+		Region:                  aws.String("mock-region"),
+		MaxRetries:              aws.Int(0),
+		Endpoint:                aws.String(server.URL),
+		DisableSSL:              aws.Bool(true),
+		Retryer:                 retryer,
+		HTTPClient:              client,
+		EnforceShouldRetryCheck: aws.Bool(true),
+	})
+
+	s.Handlers.Validate.Clear()
+	s.Handlers.Unmarshal.PushBack(unmarshal)
+	s.Handlers.UnmarshalError.PushBack(unmarshalError)
+
+	out := &testData{}
+	r := s.NewRequest(&request.Operation{Name: "Operation"}, nil, out)
+	err := r.Send()
+	if err == nil {
+		t.Fatalf("expect error, but got nil")
+	}
+	if e, a := 3, int(r.RetryCount); e != a {
+		t.Errorf("expect %d retry count, got %d", e, a)
+	}
+	if !retryer.shouldRetry {
+		t.Errorf("expect 'true' for ShouldRetry, but got %v", retryer.shouldRetry)
+	}
+}
+
+type errReader struct {
+	err error
+}
+
+func (reader *errReader) Read(b []byte) (int, error) {
+	return 0, reader.err
+}
+
+func (reader *errReader) Close() error {
+	return nil
+}
+
+func TestIsNoBodyReader(t *testing.T) {
+	cases := []struct {
+		reader io.ReadCloser
+		expect bool
+	}{
+		{ioutil.NopCloser(bytes.NewReader([]byte("abc"))), false},
+		{ioutil.NopCloser(bytes.NewReader(nil)), false},
+		{nil, false},
+		{request.NoBody, true},
+	}
+
+	for i, c := range cases {
+		if e, a := c.expect, request.NoBody == c.reader; e != a {
+			t.Errorf("%d, expect %t match, but was %t", i, e, a)
+		}
+	}
+}
+
+func TestRequest_TemporaryRetry(t *testing.T) {
+	done := make(chan struct{})
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Length", "1024")
+		w.WriteHeader(http.StatusOK)
+
+		w.Write(make([]byte, 100))
+
+		f := w.(http.Flusher)
+		f.Flush()
+
+		<-done
+	}))
+
+	client := &http.Client{
+		Timeout: 100 * time.Millisecond,
+	}
+
+	svc := awstesting.NewClient(&aws.Config{
+		Region:     unit.Session.Config.Region,
+		MaxRetries: aws.Int(1),
+		HTTPClient: client,
+		DisableSSL: aws.Bool(true),
+		Endpoint:   aws.String(server.URL),
+	})
+
+	req := svc.NewRequest(&request.Operation{
+		Name: "name", HTTPMethod: "GET", HTTPPath: "/path",
+	}, &struct{}{}, &struct{}{})
+
+	req.Handlers.Unmarshal.PushBack(func(r *request.Request) {
+		defer req.HTTPResponse.Body.Close()
+		_, err := io.Copy(ioutil.Discard, req.HTTPResponse.Body)
+		r.Error = awserr.New(request.ErrCodeSerialization, "error", err)
+	})
+
+	err := req.Send()
+	if err == nil {
+		t.Errorf("expect error, got none")
+	}
+	close(done)
+
+	aerr := err.(awserr.Error)
+	if e, a := request.ErrCodeSerialization, aerr.Code(); e != a {
+		t.Errorf("expect %q error code, got %q", e, a)
+	}
+
+	if e, a := 1, req.RetryCount; e != a {
+		t.Errorf("expect %d retries, got %d", e, a)
+	}
+
+	type temporary interface {
+		Temporary() bool
+	}
+
+	terr := aerr.OrigErr().(temporary)
+	if !terr.Temporary() {
+		t.Errorf("expect temporary error, was not")
+	}
+}

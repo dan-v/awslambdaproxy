@@ -38,8 +38,7 @@ var _ = Describe("Integration tests", func() {
 				Expect(err).NotTo(HaveOccurred())
 				defer session.Kill()
 				Eventually(session).Should(Exit(0))
-				Expect(session.Out).To(Say(":status 200"))
-				Expect(session.Out).To(Say("body: Hello, World!\n"))
+				Expect(session.Out).To(Say("Response:\nheaders: HTTP/1.1 200\nstatus: 200\n\nbody: Hello, World!\n"))
 			})
 
 			It("posts and reads a body", func() {
@@ -55,8 +54,7 @@ var _ = Describe("Integration tests", func() {
 				Expect(err).NotTo(HaveOccurred())
 				defer session.Kill()
 				Eventually(session).Should(Exit(0))
-				Expect(session.Out).To(Say(":status 200"))
-				Expect(session.Out).To(Say("body: foo\n"))
+				Expect(session.Out).To(Say("Response:\nheaders: HTTP/1.1 200\nstatus: 200\n\nbody: foo\n"))
 			})
 
 			It("gets a file", func() {

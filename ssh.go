@@ -5,14 +5,15 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"github.com/pkg/errors"
-	"golang.org/x/crypto/ssh"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
 	"os/user"
 	"strings"
+
+	"github.com/pkg/errors"
+	"golang.org/x/crypto/ssh"
 )
 
 type sshManager struct {

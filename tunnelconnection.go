@@ -6,9 +6,10 @@ import (
 	"sync"
 	"time"
 
+	"strconv"
+
 	"github.com/hashicorp/yamux"
 	"github.com/pkg/errors"
-	"strconv"
 )
 
 const (

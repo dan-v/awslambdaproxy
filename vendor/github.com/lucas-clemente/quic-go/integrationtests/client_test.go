@@ -16,7 +16,11 @@ import (
 
 var _ = Describe("Client tests", func() {
 	var client *http.Client
-	supportedVersions := append([]protocol.VersionNumber{}, protocol.SupportedVersions...)
+	var supportedVersions []protocol.VersionNumber
+
+	for _, v := range protocol.SupportedVersions {
+		supportedVersions = append(supportedVersions, v)
+	}
 
 	BeforeEach(func() {
 		err := os.Setenv("HOSTALIASES", "quic.clemente.io 127.0.0.1")
