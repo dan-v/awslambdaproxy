@@ -12,5 +12,5 @@ jobs:
       - run: make all-zip
 
       - store_artifacts:
-          path: build/linux/x86-64/awslambdaproxy.zip
+          path: build/zip/awslambdaproxy-linux-x86-64.zip
           destination: awslambdaproxy-linux-x86-64.zip
