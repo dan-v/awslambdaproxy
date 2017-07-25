@@ -1,8 +1,11 @@
 package awslambdaproxy
 
 import (
-	"github.com/ginuerzh/gost"
+	"crypto/tls"
 	"log"
+
+	"github.com/dan-v/gost"
+	"github.com/golang/glog"
 )
 
 const (
@@ -28,8 +31,15 @@ func (l *LocalProxy) run() {
 			log.Fatal(err)
 		}
 
+		certFile := gost.DefaultCertFile
+		keyFile := gost.DefaultKeyFile
+		cert, err := gost.LoadCertificate(certFile, keyFile)
+		if err != nil {
+			glog.Fatal(err)
+		}
+
 		go func(node gost.ProxyNode) {
-			server := gost.NewProxyServer(node, chain)
+			server := gost.NewProxyServer(node, chain, &tls.Config{Certificates: []tls.Certificate{cert}})
 			log.Fatal(server.Serve())
 		}(serverNode)
 	}

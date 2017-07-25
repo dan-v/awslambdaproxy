@@ -64,8 +64,6 @@ func (c *Client) Dial() error {
 	return err
 }
 
-// connStateCallback is the ConnStateCallback passed to the quic.Dial
-// this function is called in a separate go-routine
 func (c *Client) connStateCallback(sess quic.Session, state quic.ConnState) {
 	c.mutex.Lock()
 	if c.session == nil {
@@ -78,15 +76,12 @@ func (c *Client) connStateCallback(sess quic.Session, state quic.ConnState) {
 			c.Close(err)
 		}
 	case quic.ConnStateSecure:
+		c.encryptionLevel = protocol.EncryptionSecure
 		utils.Debugf("is secure")
-		// only save the encryption level if it is now higher than it was before
-		if c.encryptionLevel < protocol.EncryptionSecure {
-			c.encryptionLevel = protocol.EncryptionSecure
-		}
 		c.cryptoChangedCond.Broadcast()
 	case quic.ConnStateForwardSecure:
-		utils.Debugf("is forward secure")
 		c.encryptionLevel = protocol.EncryptionForwardSecure
+		utils.Debugf("is forward secure")
 		c.cryptoChangedCond.Broadcast()
 	}
 	c.mutex.Unlock()

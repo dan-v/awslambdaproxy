@@ -1,0 +1,16 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.9
+
+    working_directory: /tmp
+
+    steps:
+      - checkout
+
+      - run: make all-zip
+
+      - store_artifacts:
+          path: build/linux/x86-64/awslambdaproxy.zip
+          destination: awslambdaproxy-linux-x86-64.zip

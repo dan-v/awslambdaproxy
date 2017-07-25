@@ -5,9 +5,10 @@ import (
 	"net"
 	"os"
 
+	"io/ioutil"
+
 	"github.com/hashicorp/yamux"
 	"golang.org/x/crypto/ssh"
-	"io/ioutil"
 )
 
 const (
