@@ -56,8 +56,7 @@ func SetupLambdaInfrastructure() error {
 					return err
 				}
 				_, err = svc.PutRolePolicy(&iam.PutRolePolicyInput{
-					PolicyDocument: aws.String(`
-					{
+					PolicyDocument: aws.String(`{
 					  "Version": "2012-10-17",
 					  "Statement": [
 					    {
