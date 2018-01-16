@@ -1,7 +1,7 @@
 all: osx linux
 
 lambda:
-	GOOS=linux GOARCH=amd64 go build -o data/lambda/awslambdaproxy-lambda ./lambda
+	GOOS=linux GOARCH=amd64 go build -o data/lambda/main ./lambda
 	zip -jr data/lambda data/lambda
 
 bindata: lambda

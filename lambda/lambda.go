@@ -1,50 +1,53 @@
 package main
 
 import (
-	"flag"
+	"fmt"
+	"io/ioutil"
 	"log"
-	"os"
+
+	"github.com/aws/aws-lambda-go/lambda"
 )
 
-func lambdaInit(tunnelHost string, sshPort string, sshPrivateKeyFile string, sshUsername string) {
+const privateKeyFile = "/tmp/privatekey"
+
+type Request struct {
+	Address string `json:"ConnectBackAddress"`
+	SSHPort string `json:"SSHPort"`
+	SSHKey  string `json:"SSHKey"`
+	SSHUser string `json:"SSHUser"`
+}
+
+type Response struct {
+	Message string `json:"message"`
+	Ok      bool   `json:"ok"`
+}
+
+func Handler(request Request) (Response, error) {
 	log.Println("Starting lambdaProxyServer")
 	lambdaProxyServer := startLambdaProxyServer()
 
-	log.Println("Establishing tunnel connection to", tunnelHost)
-	lambdaTunnelConnection, err := setupLambdaTunnelConnection(tunnelHost, sshPort, sshUsername, sshPrivateKeyFile)
+	log.Println("Establishing tunnel connection to", request.Address)
+
+	sshKeyData := []byte(request.SSHKey)
+	err := ioutil.WriteFile(privateKeyFile, sshKeyData, 0600)
 	if err != nil {
-		log.Fatal("Failed to establish connection to "+tunnelHost, err)
+		log.Fatal("Failed to write SSH key to disk. ", err)
+	}
+
+	lambdaTunnelConnection, err := setupLambdaTunnelConnection(request.Address, request.SSHPort, request.SSHUser, privateKeyFile)
+	if err != nil {
+		log.Fatal("Failed to establish connection to "+request.Address, err)
 	}
 
 	log.Println("Starting lambdaDataCopyManager")
 	dataCopyManager := newLambdaDataCopyManager(lambdaProxyServer, lambdaTunnelConnection)
 	dataCopyManager.run()
+	return Response{
+		Message: fmt.Sprintf("Finished processing request"),
+		Ok:      true,
+	}, nil
 }
 
 func main() {
-	addressPtr := flag.String("address", "localhost", "IP of server to connect to")
-	sshPortPtr := flag.String("ssh-port", "22", "SSH port")
-	sshUsernamePtr := flag.String("ssh-user", "ubuntu", "SSH username")
-	sshPrivateKeyFilePtr := flag.String("ssh-private-key", "/tmp/privatekey", "SSH private key file")
-
-	flag.Parse()
-
-	if *addressPtr == "" {
-		flag.PrintDefaults()
-		os.Exit(1)
-	}
-	if *sshPortPtr == "" {
-		flag.PrintDefaults()
-		os.Exit(1)
-	}
-	if *sshPrivateKeyFilePtr == "" {
-		flag.PrintDefaults()
-		os.Exit(1)
-	}
-	if *sshUsernamePtr == "" {
-		flag.PrintDefaults()
-		os.Exit(1)
-	}
-
-	lambdaInit(*addressPtr, *sshPortPtr, *sshPrivateKeyFilePtr, *sshUsernamePtr)
+	lambda.Start(Handler)
 }
