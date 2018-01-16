@@ -85,7 +85,7 @@ fabric.properties
 
 /awslambdaproxy
 data/lambda.zip
-data/lambda/awslambdaproxy-lambda
+data/lambda/main
 bindata.go
 build/
 .DS_Store

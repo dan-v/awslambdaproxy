@@ -10,14 +10,15 @@ import (
 type Option func(*options)
 
 type options struct {
-	maxGoroutines     int
-	minSplitSize      int
-	useAVX2, useSSSE3 bool
-	usePAR1Matrix     bool
+	maxGoroutines              int
+	minSplitSize               int
+	useAVX2, useSSSE3, useSSE2 bool
+	usePAR1Matrix              bool
+	useCauchy                  bool
 }
 
 var defaultOptions = options{
-	maxGoroutines: 50,
+	maxGoroutines: 384,
 	minSplitSize:  512,
 }
 
@@ -28,6 +29,7 @@ func init() {
 	// Detect CPU capabilities.
 	defaultOptions.useSSSE3 = cpuid.CPU.SSSE3()
 	defaultOptions.useAVX2 = cpuid.CPU.AVX2()
+	defaultOptions.useSSE2 = cpuid.CPU.SSE2()
 }
 
 // WithMaxGoroutines is the maximum number of goroutines number for encoding & decoding.
@@ -67,6 +69,12 @@ func withAVX2(enabled bool) Option {
 	}
 }
 
+func withSSE2(enabled bool) Option {
+	return func(o *options) {
+		o.useSSE2 = enabled
+	}
+}
+
 // WithPAR1Matrix causes the encoder to build the matrix how PARv1
 // does. Note that the method they use is buggy, and may lead to cases
 // where recovery is impossible, even if there are enough parity
@@ -74,5 +82,17 @@ func withAVX2(enabled bool) Option {
 func WithPAR1Matrix() Option {
 	return func(o *options) {
 		o.usePAR1Matrix = true
+		o.useCauchy = false
+	}
+}
+
+// WithCauchyMatrix will make the encoder build a Cauchy style matrix.
+// The output of this is not compatible with the standard output.
+// A Cauchy matrix is faster to generate. This does not affect data throughput,
+// but will result in slightly faster start-up time.
+func WithCauchyMatrix() Option {
+	return func(o *options) {
+		o.useCauchy = true
+		o.usePAR1Matrix = false
 	}
 }

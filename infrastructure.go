@@ -16,8 +16,8 @@ import (
 
 const (
 	lambdaFunctionName              = "awslambdaproxy"
-	lambdaFunctionHandler           = "main.handler"
-	lambdaFunctionRuntime           = "python2.7"
+	lambdaFunctionHandler           = "main"
+	lambdaFunctionRuntime           = "go1.x"
 	lambdaFunctionIamRole           = "awslambdaproxy-role"
 	lambdaFunctionIamRolePolicyName = "awslambdaproxy-role-policy"
 	lambdaFunctionZipLocation       = "data/lambda.zip"

@@ -18,12 +18,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"text/template"
 )
 
-var cmdDirs = [...]string{"cmd", "cmds", "command", "commands"}
 var srcPaths []string
 
 func init() {
@@ -31,7 +31,27 @@ func init() {
 	envGoPath := os.Getenv("GOPATH")
 	goPaths := filepath.SplitList(envGoPath)
 	if len(goPaths) == 0 {
-		er("$GOPATH is not set")
+		// Adapted from https://github.com/Masterminds/glide/pull/798/files.
+		// As of Go 1.8 the GOPATH is no longer required to be set. Instead there
+		// is a default value. If there is no GOPATH check for the default value.
+		// Note, checking the GOPATH first to avoid invoking the go toolchain if
+		// possible.
+
+		goExecutable := os.Getenv("COBRA_GO_EXECUTABLE")
+		if len(goExecutable) <= 0 {
+			goExecutable = "go"
+		}
+
+		out, err := exec.Command(goExecutable, "env", "GOPATH").Output()
+		if err != nil {
+			er(err)
+		}
+
+		toolchainGoPath := strings.TrimSpace(string(out))
+		goPaths = filepath.SplitList(toolchainGoPath)
+		if len(goPaths) == 0 {
+			er("$GOPATH is not set")
+		}
 	}
 	srcPaths = make([]string, 0, len(goPaths))
 	for _, goPath := range goPaths {
@@ -107,8 +127,6 @@ func writeStringToFile(path string, s string) error {
 
 // writeToFile writes r to file with path only
 // if file/directory on given path doesn't exist.
-// If file/directory exists on given path, then
-// it terminates app and prints an appropriate error.
 func writeToFile(path string, r io.Reader) error {
 	if exists(path) {
 		return fmt.Errorf("%v already exists", path)

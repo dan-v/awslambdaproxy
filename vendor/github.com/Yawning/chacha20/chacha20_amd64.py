@@ -76,8 +76,7 @@ def WriteXor_sse2(tmp, inp, outp, d, v0, v1, v2, v3):
     MOVDQU([outp+d+48], tmp)
 
 # SSE2 ChaCha20 (aka vec128).  Does not handle partial blocks, and will
-# process 4/2/1 blocks at a time.  x (the ChaCha20 state) must be 16 byte
-# aligned.
+# process 4/2/1 blocks at a time.
 with Function("blocksAmd64SSE2", (x, inp, outp, nrBlocks)):
     reg_x = GeneralPurposeRegister64()
     reg_inp = GeneralPurposeRegister64()
@@ -144,10 +143,10 @@ with Function("blocksAmd64SSE2", (x, inp, outp, nrBlocks)):
     SUB(reg_blocks, 4)
     JB(vector_loop4.end)
     with vector_loop4:
-        MOVDQA(xmm_v0, mem_s0)
-        MOVDQA(xmm_v1, mem_s1)
-        MOVDQA(xmm_v2, mem_s2)
-        MOVDQA(xmm_v3, mem_s3)
+        MOVDQU(xmm_v0, mem_s0)
+        MOVDQU(xmm_v1, mem_s1)
+        MOVDQU(xmm_v2, mem_s2)
+        MOVDQU(xmm_v3, mem_s3)
 
         MOVDQA(xmm_v4, xmm_v0)
         MOVDQA(xmm_v5, xmm_v1)
@@ -340,7 +339,7 @@ with Function("blocksAmd64SSE2", (x, inp, outp, nrBlocks)):
         PADDD(xmm_v2, mem_s2)
         PADDD(xmm_v3, mem_s3)
         WriteXor_sse2(xmm_tmp, reg_inp, reg_outp, 0, xmm_v0, xmm_v1, xmm_v2, xmm_v3)
-        MOVDQA(xmm_v3, mem_s3)
+        MOVDQU(xmm_v3, mem_s3)
         PADDQ(xmm_v3, mem_one)
 
         PADDD(xmm_v4, mem_s0)
@@ -366,7 +365,7 @@ with Function("blocksAmd64SSE2", (x, inp, outp, nrBlocks)):
         WriteXor_sse2(xmm_v0, reg_inp, reg_outp, 192, xmm_v12, xmm_v13, xmm_v14, xmm_v15)
         PADDQ(xmm_v3, mem_one)
 
-        MOVDQA(mem_s3, xmm_v3)
+        MOVDQU(mem_s3, xmm_v3)
 
         ADD(reg_inp, 4 * 64)
         ADD(reg_outp, 4 * 64)
@@ -386,10 +385,10 @@ with Function("blocksAmd64SSE2", (x, inp, outp, nrBlocks)):
     xmm_s2 = xmm_v10
     xmm_s3 = xmm_v11
     xmm_one = xmm_v13
-    MOVDQA(xmm_s0, mem_s0)
-    MOVDQA(xmm_s1, mem_s1)
-    MOVDQA(xmm_s2, mem_s2)
-    MOVDQA(xmm_s3, mem_s3)
+    MOVDQU(xmm_s0, mem_s0)
+    MOVDQU(xmm_s1, mem_s1)
+    MOVDQU(xmm_s2, mem_s2)
+    MOVDQU(xmm_s3, mem_s3)
     MOVDQA(xmm_one, mem_one)
 
     #
@@ -598,7 +597,7 @@ with Function("blocksAmd64SSE2", (x, inp, outp, nrBlocks)):
     # Write back the updated counter.  Stoping at 2^70 bytes is the user's
     # problem, not mine.  (Skipped if there's exactly a multiple of 4 blocks
     # because the counter is incremented in memory while looping.)
-    MOVDQA(mem_s3, xmm_s3)
+    MOVDQU(mem_s3, xmm_s3)
 
     LABEL(out)
 
@@ -666,7 +665,7 @@ def WriteXor_avx2(tmp, inp, outp, d, v0, v1, v2, v3):
     VMOVDQU([outp+d+96], tmp)
 
 # AVX2 ChaCha20 (aka avx2).  Does not handle partial blocks, will process
-# 8/4/2 blocks at a time.  Alignment blah blah blah fuck you.
+# 8/4/2 blocks at a time.
 with Function("blocksAmd64AVX2", (x, inp, outp, nrBlocks), target=uarch.broadwell):
     reg_x = GeneralPurposeRegister64()
     reg_inp = GeneralPurposeRegister64()
@@ -1238,7 +1237,7 @@ with Function("blocksAmd64AVX2", (x, inp, outp, nrBlocks), target=uarch.broadwel
     VPERM2I128(ymm_s3, ymm_s3, ymm_s3, 0x01) # Odd number of blocks.
 
     LABEL(out_write_even)
-    VMOVDQA(x_s3, ymm_s3.as_xmm) # Write back ymm_s3 to x_v3
+    VMOVDQU(x_s3, ymm_s3.as_xmm) # Write back ymm_s3 to x_v3
 
     # Paranoia, cleanse the scratch space.
     VPXOR(ymm_v0, ymm_v0, ymm_v0)

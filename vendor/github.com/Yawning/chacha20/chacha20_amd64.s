@@ -19,10 +19,10 @@ TEXT ·blocksAmd64SSE2(SB),4,$0-32
 	SUBQ $4, DX
 	JCS vector_loop4_end
 vector_loop4_begin:
-		MOVO 0(AX), X0
-		MOVO 16(AX), X1
-		MOVO 32(AX), X2
-		MOVO 48(AX), X3
+		MOVOU 0(AX), X0
+		MOVOU 16(AX), X1
+		MOVOU 32(AX), X2
+		MOVOU 48(AX), X3
 		MOVO X0, X4
 		MOVO X1, X5
 		MOVO X2, X6
@@ -283,7 +283,7 @@ rounds_loop4_begin:
 		MOVOU 48(BX), X12
 		PXOR X3, X12
 		MOVOU X12, 48(CX)
-		MOVO 48(AX), X3
+		MOVOU 48(AX), X3
 		PADDQ 0(SP), X3
 		PADDL 0(AX), X4
 		PADDL 16(AX), X5
@@ -337,7 +337,7 @@ rounds_loop4_begin:
 		PXOR X15, X0
 		MOVOU X0, 240(CX)
 		PADDQ 0(SP), X3
-		MOVO X3, 48(AX)
+		MOVOU X3, 48(AX)
 		ADDQ $256, BX
 		ADDQ $256, CX
 		SUBQ $4, DX
@@ -345,10 +345,10 @@ rounds_loop4_begin:
 vector_loop4_end:
 	ADDQ $4, DX
 	JEQ out
-	MOVO 0(AX), X8
-	MOVO 16(AX), X9
-	MOVO 32(AX), X10
-	MOVO 48(AX), X11
+	MOVOU 0(AX), X8
+	MOVOU 16(AX), X9
+	MOVOU 32(AX), X10
+	MOVOU 48(AX), X11
 	MOVO 0(SP), X13
 	SUBQ $2, DX
 	JCS process_1_block
@@ -593,7 +593,7 @@ rounds_loop1_begin:
 	MOVOU X12, 48(CX)
 	PADDQ X13, X11
 out_serial:
-	MOVO X11, 48(AX)
+	MOVOU X11, 48(AX)
 out:
 	PXOR X0, X0
 	MOVO X0, 16(SP)
@@ -1150,7 +1150,7 @@ rounds_loop2_begin:
 out_write_odd:
 	BYTE $0xC4; BYTE $0x43; BYTE $0x1D; BYTE $0x46; BYTE $0xE4; BYTE $0x01 // VPERM2I128 ymm12, ymm12, ymm12, 1
 out_write_even:
-	BYTE $0xC5; BYTE $0x79; BYTE $0x7F; BYTE $0x60; BYTE $0x30 // VMOVDQA [rax + 48], xmm12
+	BYTE $0xC5; BYTE $0x7A; BYTE $0x7F; BYTE $0x60; BYTE $0x30 // VMOVDQU [rax + 48], xmm12
 	BYTE $0xC5; BYTE $0xED; BYTE $0xEF; BYTE $0xD2 // VPXOR ymm2, ymm2, ymm2
 	BYTE $0xC5; BYTE $0xFD; BYTE $0x7F; BYTE $0x54; BYTE $0x24; BYTE $0x40 // VMOVDQA [rsp + 64], ymm2
 	BYTE $0xC5; BYTE $0xFD; BYTE $0x7F; BYTE $0x54; BYTE $0x24; BYTE $0x20 // VMOVDQA [rsp + 32], ymm2

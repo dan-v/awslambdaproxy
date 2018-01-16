@@ -8,7 +8,7 @@
 
 Reed-Solomon Erasure Coding in Go, with speeds exceeding 1GB/s/cpu core implemented in pure Go.
 
-This is a golang port of the [JavaReedSolomon](https://github.com/Backblaze/JavaReedSolomon) library released by [Backblaze](http://backblaze.com), with some additional optimizations.
+This is a Go port of the [JavaReedSolomon](https://github.com/Backblaze/JavaReedSolomon) library released by [Backblaze](http://backblaze.com), with some additional optimizations.
 
 For an introduction on erasure coding, see the post on the [Backblaze blog](https://www.backblaze.com/blog/reed-solomon/).
 
@@ -19,8 +19,32 @@ Godoc: https://godoc.org/github.com/klauspost/reedsolomon
 # Installation
 To get the package use the standard:
 ```bash
-go get github.com/klauspost/reedsolomon
+go get -u github.com/klauspost/reedsolomon
 ```
+
+# Changes
+
+## October 1, 2017
+
+* [Cauchy Matrix](https://godoc.org/github.com/klauspost/reedsolomon#WithCauchyMatrix) is now an option. Thanks to [templexxx](https://github.com/templexxx) for the basis of this.
+* Default maximum number of [goroutines](https://godoc.org/github.com/klauspost/reedsolomon#WithMaxGoroutines) has been increased for better multi-core scaling.
+* After several requests the Reconstruct and ReconstructData now slices of zero length but sufficient capacityto be used instead of allocating new memory.
+
+## August 26, 2017
+
+*  The[`Encoder()`](https://godoc.org/github.com/klauspost/reedsolomon#Encoder) now contains an `Update` function contributed by [chenzhongtao](https://github.com/chenzhongtao).
+* [Frank Wessels](https://github.com/fwessels) kindly contributed ARM 64 bit assembly, which gives a huge performance boost on this platform.
+
+## July 20, 2017
+
+`ReconstructData` added to [`Encoder`](https://godoc.org/github.com/klauspost/reedsolomon#Encoder) interface. This can cause compatibility issues if you implement your own Encoder. A simple workaround can be added:
+```Go
+func (e *YourEnc) ReconstructData(shards [][]byte) error {
+	return ReconstructData(shards)
+}
+```
+
+You can of course also do your own implementation. The [`StreamEncoder`](https://godoc.org/github.com/klauspost/reedsolomon#StreamEncoder) handles this without modifying the interface. This is a good lesson on why returning interfaces is not a good design.
 
 # Usage
 
@@ -80,6 +104,17 @@ To indicate missing data, you set the shard to nil before calling `Reconstruct()
     err := enc.Reconstruct(data)
 ```
 The missing data and parity shards will be recreated. If more than 3 shards are missing, the reconstruction will fail.
+
+If you are only interested in the data shards (for reading purposes) you can call `ReconstructData()`:
+
+```Go
+    // Delete two data shards
+    data[3] = nil
+    data[7] = nil
+    
+    // Reconstruct just the missing data shards
+    err := enc.ReconstructData(data)
+```
 
 So to sum up reconstruction:
 * The number of data/parity shards must match the numbers used for encoding.
@@ -162,7 +197,7 @@ There is no buffering or timeouts/retry specified. If you want to add that, you 
 
 For complete examples of a streaming encoder and decoder see the [examples folder](https://github.com/klauspost/reedsolomon/tree/master/examples).
 
-#Advanced Options
+# Advanced Options
 
 You can modify internal options which affects how jobs are split between and processed by goroutines.
 
@@ -197,6 +232,28 @@ Example of performance scaling on Intel(R) Core(TM) i7-2600 CPU @ 3.40GHz - 4 ph
 | 2       | 2339,78 | 172%  |
 | 4       | 3179,33 | 235%  |
 | 8       | 4346,18 | 321%  |
+
+Benchmarking `Reconstruct()` followed by a `Verify()` (=`all`) versus just calling `ReconstructData()` (=`data`) gives the following result:
+```
+benchmark                            all MB/s     data MB/s    speedup
+BenchmarkReconstruct10x2x10000-8     2011.67      10530.10     5.23x
+BenchmarkReconstruct50x5x50000-8     4585.41      14301.60     3.12x
+BenchmarkReconstruct10x2x1M-8        8081.15      28216.41     3.49x
+BenchmarkReconstruct5x2x1M-8         5780.07      28015.37     4.85x
+BenchmarkReconstruct10x4x1M-8        4352.56      14367.61     3.30x
+BenchmarkReconstruct50x20x1M-8       1364.35      4189.79      3.07x
+BenchmarkReconstruct10x4x16M-8       1484.35      5779.53      3.89x
+```
+
+# Performance on ARM64 NEON
+
+By exploiting NEON instructions the performance for ARM has been accelerated. Below are the performance numbers for a single core on an ARM Cortex-A53 CPU @ 1.2GHz (Debian 8.0 Jessie running Go: 1.7.4):
+
+| Data | Parity | Parity | ARM64 Go MB/s | ARM64 NEON MB/s | NEON Speed |
+|------|--------|--------|--------------:|----------------:|-----------:|
+| 5    | 2      | 40%    |           189 |            1304 |       588% |
+| 10   | 2      | 20%    |           188 |            1738 |       925% |
+| 10   | 4      | 40%    |            96 |             839 |       877% |
 
 # asm2plan9s
 
