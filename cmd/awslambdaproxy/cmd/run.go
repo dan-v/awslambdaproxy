@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/dan-v/awslambdaproxy"
+	"github.com/scottjpack/awslambdaproxy"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
@@ -16,6 +16,7 @@ var (
 	frequency                            time.Duration
 	memory                               int64
 	sshUser, sshPort, regions, listeners string
+	sshHost, subnetId, sgId string
 	// Max execution time on lambda is 300 seconds currently
 	lambdaMaxFrequency  = time.Duration(290 * time.Second) // leave 10 seconds of leeway
 	lambdaMinMemorySize = 128
@@ -42,13 +43,18 @@ export AWS_SECRET_ACCESS_KEY=YYYYYYYYYYYYYYYYYYYYYY
 ./awslambdaproxy run -r us-west-2 -m 512
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		aSSHUser := viper.GetString("ssh-user")
-		aSSHPort := viper.GetString("ssh-port")
-		aRegions := strings.Split(viper.GetString("regions"), ",")
-		aMemory := viper.GetInt64("memory")
-		aFrequency := viper.GetDuration("frequency")
-		aListeners := strings.Split(viper.GetString("listeners"), ",")
-		aTimeout := int64(viper.GetDuration("frequency").Seconds()) + int64(30)
+                aSSHUser := viper.GetString("ssh-user")
+                aSSHPort := viper.GetString("ssh-port")
+                aRegions := strings.Split(viper.GetString("regions"), ",")
+                aMemory := viper.GetInt64("memory")
+                aFrequency := viper.GetDuration("frequency")
+                aListeners := strings.Split(viper.GetString("listeners"), ",")
+                aTimeout := int64(viper.GetDuration("frequency").Seconds()) + int64(30)
+                aSubnetId := viper.GetString("subnet-id")
+                aSgId := viper.GetString("sg-id")
+                aSSHHost := viper.GetString("ssh-host")
+
+
 
 		// check memory
 		if aMemory > int64(lambdaMaxMemorySize) {
@@ -67,18 +73,17 @@ export AWS_SECRET_ACCESS_KEY=YYYYYYYYYYYYYYYYYYYYYY
 		}
 
 		// check for required aws keys
-		access := os.Getenv("AWS_ACCESS_KEY_ID")
-		if access == "" {
-			fmt.Println("Must specify environment variable AWS_ACCESS_KEY_ID")
-			os.Exit(1)
-		}
-		secret := os.Getenv("AWS_SECRET_ACCESS_KEY")
-		if secret == "" {
-			fmt.Println("Must specify environment variable AWS_SECRET_ACCESS_KEY")
-			os.Exit(1)
-		}
-
-		awslambdaproxy.ServerInit(aSSHUser, aSSHPort, aRegions, aMemory, aFrequency, aListeners, aTimeout)
+//		access := os.Getenv("AWS_ACCESS_KEY_ID")
+//		if access == "" {
+//			fmt.Println("Must specify environment variable AWS_ACCESS_KEY_ID")
+//			os.Exit(1)
+//		}
+//		secret := os.Getenv("AWS_SECRET_ACCESS_KEY")
+//		if secret == "" {
+//			fmt.Println("Must specify environment variable AWS_SECRET_ACCESS_KEY")
+//			os.Exit(1)
+//		}
+                awslambdaproxy.ServerInit(aSSHUser, aSSHPort, aSSHHost, aRegions, aMemory, aFrequency, aListeners, aTimeout, aSubnetId, aSgId)
 	},
 }
 
@@ -108,10 +113,23 @@ func init() {
 	runCmd.Flags().StringVarP(&sshPort, "ssh-port", "", "22", "SSH port for tunnel "+
 		"connections from Lambda.")
 
+        //Adding variables for VPC Endpoint Functions
+        runCmd.Flags().StringVarP(&subnetId, "subnet-id", "s", "", "Subnet ID for internal endpoints.")
+        runCmd.Flags().StringVarP(&sgId, "sg-id", "g", "", "Security Group ID for internal endpoints.")
+
+        //And SSH reverse shell address
+        runCmd.Flags().StringVarP(&sshHost, "ssh-host", "i", "", "IP/Hostname for SSH Reverse Shell Connection (If not this host)")
+
 	viper.BindPFlag("regions", runCmd.Flags().Lookup("regions"))
 	viper.BindPFlag("frequency", runCmd.Flags().Lookup("frequency"))
 	viper.BindPFlag("memory", runCmd.Flags().Lookup("memory"))
 	viper.BindPFlag("ssh-user", runCmd.Flags().Lookup("ssh-user"))
 	viper.BindPFlag("ssh-port", runCmd.Flags().Lookup("ssh-port"))
 	viper.BindPFlag("listeners", runCmd.Flags().Lookup("listeners"))
+
+        //Adding binds for VPC Endpoint Functions and configurable reverse shell address
+        viper.BindPFlag("subnet-id", runCmd.Flags().Lookup("subnet-id"))
+        viper.BindPFlag("sg-id", runCmd.Flags().Lookup("sg-id"))
+        viper.BindPFlag("ssh-host", runCmd.Flags().Lookup("ssh-host"))
+
 }

@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/dan-v/awslambdaproxy"
+	"github.com/scottjpack/awslambdaproxy"
 	"github.com/spf13/cobra"
 	"os"
 )
