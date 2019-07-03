@@ -89,3 +89,4 @@ data/lambda/main
 bindata.go
 build/
 .DS_Store
+vendor/

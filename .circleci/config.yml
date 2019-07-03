@@ -4,8 +4,6 @@ jobs:
     docker:
       - image: circleci/golang:1.12
 
-    working_directory: /tmp
-
     steps:
       - checkout
       - run: wget https://bin.equinox.io/a/75VeNN6mcnk/github-com-kevinburke-go-bindata-go-bindata-linux-amd64.tar.gz
