@@ -2,15 +2,15 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.9
+      - image: circleci/golang:1.12
 
-    working_directory: /go/src/github.com/dan-v/awslambdaproxy
+    working_directory: /tmp
 
     steps:
       - checkout
-
+      - run: wget https://bin.equinox.io/a/75VeNN6mcnk/github-com-kevinburke-go-bindata-go-bindata-linux-amd64.tar.gz
+      - run: sudo tar xvf github-com-kevinburke-go-bindata-go-bindata-linux-amd64.tar.gz -C /usr/bin
       - run: make all-zip
-
       - store_artifacts:
           path: build/zip/awslambdaproxy-linux-x86-64.zip
           destination: awslambdaproxy-linux-x86-64.zip

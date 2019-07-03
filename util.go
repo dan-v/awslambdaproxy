@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
 )
 
@@ -44,4 +46,15 @@ func getPublicIP() (string, error) {
 		return "", errors.Wrap(err, "Failed to read IP address from "+getIPUrl)
 	}
 	return string(bytes.TrimSpace(buf)), nil
+}
+
+func getSessionAWS() (*session.Session, error) {
+	sess, err := session.NewSession(aws.NewConfig())
+	if err != nil {
+		return nil, err
+	}
+	if _, err = sess.Config.Credentials.Get(); err != nil {
+		return nil, err
+	}
+	return sess, nil
 }

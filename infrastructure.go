@@ -32,9 +32,13 @@ type lambdaInfrastructure struct {
 
 // SetupLambdaInfrastructure sets up IAM role needed to run awslambdaproxy
 func SetupLambdaInfrastructure() error {
-	svc := iam.New(session.New(), &aws.Config{})
+	sess, err := getSessionAWS()
+	if err != nil {
+		return err
+	}
 
-	_, err := svc.GetRole(&iam.GetRoleInput{
+	svc := iam.New(sess, &aws.Config{})
+	_, err = svc.GetRole(&iam.GetRoleInput{
 		RoleName: aws.String(lambdaFunctionIamRole),
 	})
 	if err != nil {
@@ -91,7 +95,12 @@ func SetupLambdaInfrastructure() error {
 }
 
 func (infra *lambdaInfrastructure) setup() error {
-	svc := iam.New(session.New(), infra.config)
+	sess, err := getSessionAWS()
+	if err != nil {
+		return err
+	}
+
+	svc := iam.New(sess, infra.config)
 	resp, err := svc.GetRole(&iam.GetRoleInput{
 		RoleName: aws.String(lambdaFunctionIamRole),
 	})
@@ -105,7 +114,7 @@ func (infra *lambdaInfrastructure) setup() error {
 	}
 	for _, region := range infra.regions {
 		log.Println("Setting up Lambda function in region: " + region)
-		err = infra.createOrUpdateLambdaFunction(region, roleArn, zip)
+		err = infra.createOrUpdateLambdaFunction(sess, region, roleArn, zip)
 		if err != nil {
 			return errors.Wrap(err, "Could not create Lambda function in region "+region)
 		}
@@ -126,10 +135,10 @@ func setupLambdaInfrastructure(regions []string, memorySize int64, timeout int64
 	return nil
 }
 
-func (infra *lambdaInfrastructure) createOrUpdateLambdaFunction(region, roleArn string, payload []byte) error {
+func (infra *lambdaInfrastructure) createOrUpdateLambdaFunction(sess *session.Session, region, roleArn string, payload []byte) error {
 	config := infra.config.WithRegion(region)
-	svc := lambda.New(session.New(), config)
 
+	svc := lambda.New(sess, config)
 	exists, err := lambdaExists(svc)
 	if err != nil {
 		return err
@@ -218,9 +227,8 @@ func createLambdaAlias(svc *lambda.Lambda, functionVersion *string) error {
 	return err
 }
 
-func (infra *lambdaInfrastructure) createIAMLambdaRole(roleName string) (arn string, err error) {
-	svc := iam.New(session.New(), infra.config)
-
+func (infra *lambdaInfrastructure) createIAMLambdaRole(sess *session.Session, roleName string) (arn string, err error) {
+	svc := iam.New(sess, infra.config)
 	resp, err := svc.GetRole(&iam.GetRoleInput{
 		RoleName: aws.String(roleName),
 	})
@@ -242,7 +250,7 @@ func (infra *lambdaInfrastructure) createIAMLambdaRole(roleName string) (arn str
 				if err != nil {
 					return "", err
 				}
-				if err := infra.createIAMLambdaRolePolicy(*res.Role.RoleName); err != nil {
+				if err := infra.createIAMLambdaRolePolicy(sess, *res.Role.RoleName); err != nil {
 					return "", err
 				}
 				return *res.Role.Arn, nil
@@ -254,9 +262,8 @@ func (infra *lambdaInfrastructure) createIAMLambdaRole(roleName string) (arn str
 	return *resp.Role.Arn, nil
 }
 
-func (infra *lambdaInfrastructure) createIAMLambdaRolePolicy(roleName string) error {
-	svc := iam.New(session.New(), infra.config)
-
+func (infra *lambdaInfrastructure) createIAMLambdaRolePolicy(sess *session.Session, roleName string) error {
+	svc := iam.New(sess, infra.config)
 	_, err := svc.PutRolePolicy(&iam.PutRolePolicyInput{
 		PolicyDocument: aws.String(`{
 		  "Version": "2012-10-17",

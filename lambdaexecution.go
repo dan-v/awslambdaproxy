@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/pkg/errors"
 )
@@ -40,7 +39,10 @@ func (l *lambdaExecutionManager) run() {
 
 func (l *lambdaExecutionManager) executeFunction(region int) error {
 	log.Println("Executing Lambda function in region", l.regions[region])
-	sess := session.New(&aws.Config{})
+	sess, err := getSessionAWS()
+	if err != nil {
+		return err
+	}
 	svc := lambda.New(sess, &aws.Config{Region: aws.String(l.regions[region])})
 	lambdaPayload := lambdaPayload{
 		ConnectBackAddress: l.publicIP,
@@ -54,7 +56,7 @@ func (l *lambdaExecutionManager) executeFunction(region int) error {
 		InvocationType: aws.String(lambda.InvocationTypeEvent),
 		Payload:        payload,
 	}
-	_, err := svc.Invoke(params)
+	_, err = svc.Invoke(params)
 	if err != nil {
 		return errors.Wrap(err, "Failed to execute Lambda function")
 	}

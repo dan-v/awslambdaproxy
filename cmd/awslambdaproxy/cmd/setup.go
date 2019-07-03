@@ -2,24 +2,21 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/dan-v/awslambdaproxy"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 // setupCmd represents the setup command
 var setupCmd = &cobra.Command{
 	Use:   "setup",
 	Short: "Setup awslambdaproxy AWS infrastructure",
-	Long: `This will setup all required AWS infrastructure to run awslambdaproxy. Example:
-
-export AWS_ACCESS_KEY_ID=XXXXXXXXXX
-export AWS_SECRET_ACCESS_KEY=YYYYYYYYYYYYYYYYYYYYYY
-./awslambdaproxy setup`,
+	Long:  `This will setup all required AWS infrastructure to run awslambdaproxy.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		err := awslambdaproxy.SetupLambdaInfrastructure()
 		if err != nil {
-			fmt.Print("Failed to run setup for awslambdaproxy", err)
+			fmt.Print("Failed to run setup for awslambdaproxy: ", err)
 			os.Exit(1)
 		}
 	},
