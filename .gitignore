@@ -90,3 +90,6 @@ bindata.go
 build/
 .DS_Store
 vendor/
+
+# Terraform
+terraform.*
