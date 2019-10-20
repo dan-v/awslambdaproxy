@@ -20,7 +20,24 @@ At a high level, awslambdaproxy proxies TCP/UDP traffic through AWS Lambda regio
 
 ## Installation
 
-The easiest way is to download a pre-built binary from the [GitHub Releases](https://github.com/dan-v/awslambdaproxy/releases) page.
+The easiest way is to run the `deploy.sh` script which uses Terraform to provision the infrastructure. You can download Terraform [here](https://www.terraform.io/downloads.html).
+
+Once the deployment script has finished you'll be shown a command to run that will remotely start the proxy:
+
+```bash
+To start proxy:
+	ssh ubuntu@54.252.187.46 /home/ubuntu/awslambdaproxy run &
+```
+
+Finally, you need to configure your browser with the IP and credentials that have just been displayed:
+```bash
+2019/10/20 17:16:32 #######################################
+2019/10/20 17:16:32 Proxy IP:  54.252.187.46
+2019/10/20 17:16:32 Listeners:  [admin:awslambdaproxy@:8080]
+2019/10/20 17:16:32 #######################################
+```
+
+Now you're all set. Visit http://ifconfig.co/ to confirm that the proxy is working.
 
 ## Usage
 
@@ -92,7 +109,7 @@ aws iam create-access-key --user-name awslambdaproxy-run
 6. <b>How much does this cost?</b> awslambdaproxy should be able to run mostly on the [AWS free tier](https://aws.amazon.com/free/) minus bandwidth costs. It can run on a t2.micro instance and the default 128MB Lambda function that is constantly running should also fall in the free tier usage. The bandwidth is what will cost you money; you will pay for bandwidth usage for both EC2 and Lambda.
 7. <b>Why does my connection drop periodically?</b> AWS Lambda functions can currently only execute for a maximum of 15 minutes. In order to maintain an ongoing proxy a new function is executed and all new traffic is cut over to it. Any ongoing connections to the previous Lambda function will hard stop after a timeout period. You generally won't see any issues for normal web browsing as connections are very short lived, but for any long lived connections you may see issues.
 
-# Powered by
+j Powered by
 * [gost](https://github.com/ginuerzh/gost) - A simple security tunnel written in Golang.
 * [yamux](https://github.com/hashicorp/yamux) - Golang connection multiplexing library.
 * [goad](https://github.com/goadapp/goad) - Code was borrowed from this project to handle AWS Lambda zip creation and function upload.
