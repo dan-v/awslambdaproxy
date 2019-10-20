@@ -25,14 +25,15 @@ The easiest way is to run the `deploy.sh` script which uses Terraform to provisi
 Once the deployment script has finished you'll be shown a command to run that will remotely start the proxy:
 
 ```bash
-To start proxy:
-	ssh ubuntu@54.252.187.46 /home/ubuntu/awslambdaproxy run &
+########################## To start proxy: ##########################
+      ssh ubuntu@54.133.22.0 /home/ubuntu/awslambdaproxy run &
+#####################################################################
 ```
 
 Finally, you need to configure your browser with the IP and credentials that have just been displayed:
 ```bash
 2019/10/20 17:16:32 #######################################
-2019/10/20 17:16:32 Proxy IP:  54.252.187.46
+2019/10/20 17:16:32 Proxy IP:  54.133.22.0
 2019/10/20 17:16:32 Listeners:  [admin:awslambdaproxy@:8080]
 2019/10/20 17:16:32 #######################################
 ```

@@ -93,3 +93,4 @@ vendor/
 
 # Terraform
 terraform.*
+.terraform
