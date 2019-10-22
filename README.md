@@ -110,7 +110,7 @@ aws iam create-access-key --user-name awslambdaproxy-run
 6. <b>How much does this cost?</b> awslambdaproxy should be able to run mostly on the [AWS free tier](https://aws.amazon.com/free/) minus bandwidth costs. It can run on a t2.micro instance and the default 128MB Lambda function that is constantly running should also fall in the free tier usage. The bandwidth is what will cost you money; you will pay for bandwidth usage for both EC2 and Lambda.
 7. <b>Why does my connection drop periodically?</b> AWS Lambda functions can currently only execute for a maximum of 15 minutes. In order to maintain an ongoing proxy a new function is executed and all new traffic is cut over to it. Any ongoing connections to the previous Lambda function will hard stop after a timeout period. You generally won't see any issues for normal web browsing as connections are very short lived, but for any long lived connections you may see issues.
 
-j Powered by
+# Powered by
 * [gost](https://github.com/ginuerzh/gost) - A simple security tunnel written in Golang.
 * [yamux](https://github.com/hashicorp/yamux) - Golang connection multiplexing library.
 * [goad](https://github.com/goadapp/goad) - Code was borrowed from this project to handle AWS Lambda zip creation and function upload.
