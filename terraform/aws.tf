@@ -1,25 +1,11 @@
-variable "aws-profile" {}
-variable "ssh-pub-key" {
-  default = "~/.ssh/id_rsa.pub"
-}
-variable "iam-policy-file" {
-  default = "./iam/setup.json"
-}
-variable "package-url" {
-  default = "https://github.com/dan-v/awslambdaproxy/releases/download/v0.0.8/awslambdaproxy-linux-x86-64.zip"
-}
-variable "proxy-regions" {
-  default = "us-west-2,us-west-1,us-east-1,us-east-2,ap-southeast-2"
-}
-
 provider "aws" {
-  profile = var.aws-profile
+  profile = var.aws_profile
   region  = "ap-southeast-2"
 }
 
 resource "aws_key_pair" "lambdaproxy_ssh_key" {
   key_name   = "lambdaproxy_ssh_key"
-  public_key = "${file("${var.ssh-pub-key}")}"
+  public_key = "${file("${var.ssh_pub_key}")}"
 }
 
 resource "aws_vpc" "lambdaproxy" {
@@ -106,13 +92,12 @@ resource "aws_iam_role_policy" "setup_policy" {
   role = "${aws_iam_role.assume_role.id}"
 
   # This policy's privileges cover both the setup and runtime cases
-  policy = "${file("${var.iam-policy-file}")}"
+  policy = "${file("${var.iam_policy_file}")}"
 }
 
 resource "aws_instance" "lambdaproxybox" {
-  # ap-southeast-2 18.04 LTS "bionic" HVM EBS store
-  ami           = "ami-0532935b53d8e05ee"
-  instance_type = "t2.micro"
+  ami           = "${var.ami_id}"
+  instance_type = "${var.instance_type}"
   key_name      = "${aws_key_pair.lambdaproxy_ssh_key.key_name}"
   vpc_security_group_ids = [
     "${aws_security_group.lambdaproxy.id}"
@@ -141,14 +126,14 @@ resource "null_resource" "foobar" {
   connection {
     type  = "ssh"
     host  = "${aws_instance.lambdaproxybox.public_ip}"
-    user  = "ubuntu"
+    user  = "${var.ec2_user}"
     port  = "22"
     agent = true
   }
 
   provisioner "remote-exec" {
     inline = [
-      "wget ${var.package-url}",
+      "wget ${var.package_url}",
       "sudo apt install -y unzip",
       "unzip awslambdaproxy-linux-x86-64.zip",
       "./awslambdaproxy setup"
@@ -158,4 +143,8 @@ resource "null_resource" "foobar" {
 
 output "lambdaproxybox-ec2-ip" {
   value = "${aws_instance.lambdaproxybox.public_ip}"
+}
+
+output "ec2_user" {
+  value = "${var.ec2_user}"
 }
