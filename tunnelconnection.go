@@ -121,7 +121,7 @@ func (t *connectionManager) runTunnel() {
 		for k := range allLambdaIPs {
 			ips = append(ips, k)
 		}
-		log.Printf("%v Unique Lambda IPs used so far: %v\n", len(allLambdaIPs), strings.Join(ips, ", "))
+		log.Printf("%v Unique Lambda IPs used so far\n", len(allLambdaIPs))
 		log.Println("---------------")
 	}
 }
