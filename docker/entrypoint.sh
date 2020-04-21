@@ -1,6 +1,7 @@
 #!/bin/bash
 
 if [ "$1" == "setup" ]; then
+  # ask for credentials to setup as this should be a different key with elevated permissions
   read -p 'Enter AWS_ACCESS_KEY_ID: ' AWS_ACCESS_KEY_ID
   read -sp 'Enter AWS_SECRET_ACCESS_KEY: ' AWS_SECRET_ACCESS_KEY
   export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
@@ -9,14 +10,27 @@ if [ "$1" == "setup" ]; then
   exit 0
 fi
 
-mkdir /tmp/etc
-mkdir /tmp/etc/ssh
+# if docker secret has been provided for AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY use it
+if [[ -f /run/secrets/AWS_ACCESS_KEY_ID && -f /run/secrets/AWS_SECRET_ACCESS_KEY ]];
+then
+  export AWS_ACCESS_KEY_ID=$(cat /run/secrets/AWS_ACCESS_KEY_ID)
+  export AWS_SECRET_ACCESS_KEY=$(cat /run/secrets/AWS_SECRET_ACCESS_KEY)
+fi
+
+# if still don't have keys, exit with error
+if [ -z "${AWS_ACCESS_KEY_ID}" ]; then
+  echo "Need to provide AWS_ACCESS_KEY_ID as secret or environment variable"
+  exit 1
+fi
+if [ -z "${AWS_SECRET_ACCESS_KEY}" ]; then
+  echo "Need to provide AWS_SECRET_ACCESS_KEY as secret or environment variable"
+  exit 1
+fi
+
+# setup ssh
+mkdir -p /tmp/etc/ssh
 ssh-keygen -A -f /tmp
 /usr/sbin/sshd
 
-if [[ "${DEBUG_PROXY}" == 'true' ]]; then
-  DEBUG_PROXY="--debug-proxy"
-fi
-
-/app/awslambdaproxy run -r ${AWS_REGIONS} --ssh-port ${SSH_PORT} -l ${PROXY_LISTENERS} \
-  -f ${PROXY_FREQUENCY_REFRESH} -m ${AWS_LAMBDA_MEMORY} ${DEBUG_PROXY}
+# run by default and pass any supplied arguments
+/app/awslambdaproxy run $@

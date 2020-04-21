@@ -8,14 +8,15 @@ RUN cd /src && make linux
 FROM alpine:latest
 COPY --from=build-env /src/build/linux/x86-64/awslambdaproxy /app/
 
-ENV AWS_ACCESS_KEY_ID= \
-    AWS_SECRET_ACCESS_KEY= \
-    AWS_REGIONS=us-west-2 \
-    AWS_LAMBDA_MEMORY=128 \
-    SSH_PORT=2222 \
-    PROXY_LISTENERS="admin:awslambdaproxy@:8080" \
-    PROXY_FREQUENCY_REFRESH="14m20s" \
-    DEBUG_PROXY=false
+ENV AWS_ACCESS_KEY_ID=
+ENV AWS_SECRET_ACCESS_KEY=
+ENV REGIONS=
+ENV FREQUENCY=
+ENV MEMORY=
+ENV SSH_USER=
+ENV SSH_PORT=2222
+ENV LISTENER=
+ENV DEBUG_PROXY=
 
 WORKDIR /app
 
