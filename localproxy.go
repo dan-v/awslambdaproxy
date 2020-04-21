@@ -4,12 +4,11 @@ import (
 	"crypto/tls"
 	"log"
 
-	"github.com/dan-v/gost"
-	"github.com/golang/glog"
+	"github.com/ginuerzh/gost"
 )
 
 const (
-	forwardProxy = "socks5://localhost:8082"
+	forwardProxy = "localhost:8082"
 )
 
 // LocalProxy is proxy listener and where to forward
@@ -19,34 +18,39 @@ type LocalProxy struct {
 }
 
 func (l *LocalProxy) run() {
-	chain := gost.NewProxyChain()
-	if err := chain.AddProxyNodeString(l.forwardProxy); err != nil {
+	baseCfg := &baseConfig{}
+	baseCfg.route.ChainNodes = []string{l.forwardProxy}
+	baseCfg.route.ServeNodes = l.listeners
+
+	cert, err := gost.GenCertificate()
+	if err != nil {
 		log.Fatal(err)
 	}
-	chain.Init()
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+	}
+	gost.DefaultTLSConfig = tlsConfig
 
-	for _, ns := range l.listeners {
-		serverNode, err := gost.ParseProxyNode(ns)
-		if err != nil {
-			log.Fatal(err)
-		}
+	var routers []router
+	rts, err := baseCfg.route.GenRouters()
+	if err != nil {
+		log.Fatal(err)
+	}
+	routers = append(routers, rts...)
 
-		certFile := gost.DefaultCertFile
-		keyFile := gost.DefaultKeyFile
-		cert, err := gost.LoadCertificate(certFile, keyFile)
-		if err != nil {
-			glog.Fatal(err)
-		}
-
-		go func(node gost.ProxyNode) {
-			server := gost.NewProxyServer(node, chain, &tls.Config{Certificates: []tls.Certificate{cert}})
-			log.Fatal(server.Serve())
-		}(serverNode)
+	if len(routers) == 0 {
+		log.Fatalln("invalid config", err)
+	}
+	for i := range routers {
+		go routers[i].Serve()
 	}
 }
 
 // NewLocalProxy starts a local proxy that will forward to proxy running in Lambda
-func NewLocalProxy(listeners []string) (*LocalProxy, error) {
+func NewLocalProxy(listeners []string, debug bool) (*LocalProxy, error) {
+	if debug {
+		gost.SetLogger(&gost.LogLogger{})
+	}
 	l := &LocalProxy{
 		listeners:    listeners,
 		forwardProxy: forwardProxy,

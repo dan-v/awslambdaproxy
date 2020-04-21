@@ -16,6 +16,7 @@ import (
 var (
 	frequency                            time.Duration
 	memory                               int64
+	debugProxy 						     bool
 	sshUser, sshPort, regions, listeners string
 	// Max execution time on lambda is 900 seconds currently
 	lambdaMaxFrequency  = time.Duration(890 * time.Second) // leave 10 seconds of leeway
@@ -39,6 +40,7 @@ var runCmd = &cobra.Command{
 ./awslambdaproxy run -r us-west-2 -m 512
 `,
 	Run: func(cmd *cobra.Command, args []string) {
+		aDebugProxy := viper.GetBool("debug-proxy")
 		aSSHUser := viper.GetString("ssh-user")
 		aSSHPort := viper.GetString("ssh-port")
 		aRegions := strings.Split(viper.GetString("regions"), ",")
@@ -63,7 +65,7 @@ var runCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		awslambdaproxy.ServerInit(aSSHUser, aSSHPort, aRegions, aMemory, aFrequency, aListeners, aTimeout)
+		awslambdaproxy.ServerInit(aSSHUser, aSSHPort, aRegions, aMemory, aFrequency, aListeners, aTimeout, aDebugProxy)
 	},
 }
 
@@ -92,6 +94,7 @@ func init() {
 		"connections from Lambda.")
 	runCmd.Flags().StringVarP(&sshPort, "ssh-port", "", "22", "SSH port for tunnel "+
 		"connections from Lambda.")
+	runCmd.Flags().BoolVar(&debugProxy, "debug-proxy", false, "enable debug logging for proxy")
 
 	viper.BindPFlag("regions", runCmd.Flags().Lookup("regions"))
 	viper.BindPFlag("frequency", runCmd.Flags().Lookup("frequency"))
@@ -99,4 +102,5 @@ func init() {
 	viper.BindPFlag("ssh-user", runCmd.Flags().Lookup("ssh-user"))
 	viper.BindPFlag("ssh-port", runCmd.Flags().Lookup("ssh-port"))
 	viper.BindPFlag("listeners", runCmd.Flags().Lookup("listeners"))
+	viper.BindPFlag("debug-proxy", runCmd.Flags().Lookup("debug-proxy"))
 }

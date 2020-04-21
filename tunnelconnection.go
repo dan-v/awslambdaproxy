@@ -1,8 +1,12 @@
 package awslambdaproxy
 
 import (
+	"io/ioutil"
 	"log"
 	"net"
+	"net/http"
+	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -59,6 +63,7 @@ func (t *connectionManager) handleForwardConnection(localProxyConn net.Conn) {
 }
 
 func (t *connectionManager) runTunnel() {
+	allLambdaIPs := map[string]int{}
 	for {
 		if len(t.tunnelConnections) > maxTunnels {
 			log.Println("Too many active tunnelConnections: " + string(len(t.tunnelConnections)) + ". MAX=" +
@@ -90,18 +95,69 @@ func (t *connectionManager) runTunnel() {
 			streams: make(map[uint32]*yamux.Stream),
 			time:    time.Now(),
 		}
-
 		t.tunnelMutex.Unlock()
+
 		go t.monitorTunnelSessionHealth(t.activeTunnel)
-		log.Println("Active tunnel count: ", len(t.tunnelConnections))
-		for k, v := range t.tunnelConnections {
-			log.Println("---------------")
-			log.Println("Connection: " + k)
-			log.Println("Start Time: " + v.time.String())
-			log.Println("Total Streams: " + strconv.Itoa(v.sess.NumStreams()))
-			log.Println("---------------")
+
+		externalIP, err := t.getLambdaExternalIP()
+		if err != nil {
+			log.Println("Failed to check ip address:", err)
+		} else {
+			allLambdaIPs[externalIP] += 1
 		}
+
+		log.Println("---------------")
+		log.Println("Current Lambda IP Address: ", externalIP)
+		log.Println("Active Lambda tunnel count: ", len(t.tunnelConnections))
+		count := 1
+		for k, v := range t.tunnelConnections {
+			log.Printf("Lambda Tunnel #%v\n", count)
+			log.Println("	Connection ID: " + k)
+			log.Println("	Start Time: " + v.time.Format("2006-01-02T15:04:05"))
+			log.Println("	Active Streams: " + strconv.Itoa(v.sess.NumStreams()))
+			count++
+		}
+		ips := make([]string, 0, len(allLambdaIPs))
+		for k := range allLambdaIPs {
+			ips = append(ips, k)
+		}
+		log.Printf("%v Unique Lambda IPs used so far: %v\n", len(allLambdaIPs), strings.Join(ips, ", "))
+		log.Println("---------------")
 	}
+}
+
+func (t *connectionManager) getLambdaExternalIP() (string, error) {
+	proxyURL, err := url.Parse("http://localhost:" + forwardPort)
+	if err != nil {
+		return "", err
+	}
+
+	url, err := url.Parse(getIPUrl)
+	if err != nil {
+		return "", err
+	}
+
+	transport := &http.Transport{
+		Proxy: http.ProxyURL(proxyURL),
+	}
+	client := &http.Client{
+		Transport: transport,
+	}
+	request, err := http.NewRequest("GET", url.String(), nil)
+	if err != nil {
+		return "", err
+	}
+	response, err := client.Do(request)
+	if err != nil {
+		return "", err
+	}
+
+	defer response.Body.Close()
+	data, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(data)), nil
 }
 
 func (t *connectionManager) removeTunnelConnection(connectionID string) {

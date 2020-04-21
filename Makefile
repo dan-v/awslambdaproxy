@@ -1,17 +1,17 @@
-all: osx linux
+all: linux
 
 lambda:
-	GOOS=linux GOARCH=amd64 go build -o data/lambda/main ./lambda
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o data/lambda/main ./lambda
 	zip -jr data/lambda data/lambda
 
 bindata: lambda
 	go-bindata -nocompress -pkg awslambdaproxy -o bindata.go data/lambda.zip
 
 linux: bindata
-	GOOS=linux GOARCH=amd64 go build -o ./build/linux/x86-64/awslambdaproxy ./cmd/awslambdaproxy
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./build/linux/x86-64/awslambdaproxy ./cmd/awslambdaproxy
 
-osx: bindata
-	GOOS=darwin GOARCH=amd64 go build -o ./build/osx/x86-64/awslambdaproxy ./cmd/awslambdaproxy
+osx:
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./build/osx/x86-64/awslambdaproxy ./cmd/awslambdaproxy
 
 clean:
 	rm -rf data/lambda/awslambdaproxy-lambda
@@ -21,7 +21,6 @@ clean:
 
 all-zip: all
 	mkdir ./build/zip
-	zip -jr ./build/zip/awslambdaproxy-osx-x86-64 ./build/osx/x86-64/awslambdaproxy
 	zip -jr ./build/zip/awslambdaproxy-linux-x86-64 ./build/linux/x86-64/awslambdaproxy
 
 .PHONY: lambda bindata

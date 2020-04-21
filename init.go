@@ -8,7 +8,7 @@ import (
 
 // ServerInit is the main entrypoint for the server portion of awslambdaproxy
 func ServerInit(sshUser string, sshPort string, regions []string, memory int64, frequency time.Duration,
-	listeners []string, timeout int64) {
+		listeners []string, timeout int64, debugProxy bool) {
 	publicIP, err := getPublicIP()
 	if err != nil {
 		log.Fatal("Error getting public IP address", err.Error())
@@ -26,7 +26,7 @@ func ServerInit(sshUser string, sshPort string, regions []string, memory int64, 
 		log.Fatal("Failed to setup sshManager", err.Error())
 	}
 
-	localProxy, err := NewLocalProxy(listeners)
+	localProxy, err := NewLocalProxy(listeners, debugProxy)
 	if err != nil {
 		log.Fatal("Failed to setup LocalProxy", err.Error())
 	}

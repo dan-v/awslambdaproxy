@@ -23,17 +23,16 @@ type Response struct {
 }
 
 func Handler(request Request) (Response, error) {
-	log.Println("Starting lambdaProxyServer")
-	lambdaProxyServer := startLambdaProxyServer()
-
-	log.Println("Establishing tunnel connection to", request.Address)
-
 	sshKeyData := []byte(request.SSHKey)
 	err := ioutil.WriteFile(privateKeyFile, sshKeyData, 0600)
 	if err != nil {
 		log.Fatal("Failed to write SSH key to disk. ", err)
 	}
 
+	log.Println("Starting lambdaProxyServer")
+	lambdaProxyServer := startLambdaProxyServer()
+
+	log.Println("Establishing tunnel connection to", request.Address)
 	lambdaTunnelConnection, err := setupLambdaTunnelConnection(request.Address, request.SSHPort, request.SSHUser, privateKeyFile)
 	if err != nil {
 		log.Fatal("Failed to establish connection to "+request.Address, err)

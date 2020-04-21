@@ -1,0 +1,11 @@
+version: "3.7"
+services:
+  awslambdaproxy:
+    environment:
+      AWS_ACCESS_KEY_ID: ""
+      AWS_SECRET_ACCESS_KEY: ""
+      AWS_REGIONS: "us-west-2"
+    image: vdan/awslambdaproxy:latest
+    ports:
+      - 2222:2222
+      - 8080:8080

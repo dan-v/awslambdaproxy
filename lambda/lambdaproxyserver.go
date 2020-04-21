@@ -1,11 +1,9 @@
 package main
 
 import (
-	"crypto/tls"
 	"log"
 
-	"github.com/dan-v/gost"
-	"github.com/golang/glog"
+	"github.com/ginuerzh/gost"
 )
 
 type lambdaProxyServer struct {
@@ -13,26 +11,13 @@ type lambdaProxyServer struct {
 }
 
 func (l *lambdaProxyServer) run() {
-	chain := gost.NewProxyChain()
-	if err := chain.AddProxyNodeString(); err != nil {
-		log.Fatal(err)
-	}
-	chain.Init()
-
-	serverNode, err := gost.ParseProxyNode(l.port)
+	ln, err := gost.TCPListener(l.port)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	certFile := gost.DefaultCertFile
-	keyFile := gost.DefaultKeyFile
-	cert, err := gost.LoadCertificate(certFile, keyFile)
-	if err != nil {
-		glog.Fatal(err)
-	}
-
-	server := gost.NewProxyServer(serverNode, chain, &tls.Config{Certificates: []tls.Certificate{cert}})
-	log.Fatal(server.Serve())
+	h := gost.AutoHandler()
+	s := &gost.Server{Listener: ln}
+	log.Fatal(s.Serve(h))
 }
 
 func startLambdaProxyServer() *lambdaProxyServer {
