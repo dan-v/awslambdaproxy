@@ -1,18 +1,16 @@
 package main
 
 import (
+	"io/ioutil"
 	"log"
 	"net"
-	"os"
-
-	"io/ioutil"
 
 	"github.com/hashicorp/yamux"
 	"golang.org/x/crypto/ssh"
 )
 
 const (
-	remoteTunnelPort = "localhost:8081"
+	tunnelPortOnRemoteServer = "localhost:8081"
 )
 
 type lambdaTunnelConnection struct {
@@ -38,26 +36,36 @@ func (l *lambdaTunnelConnection) setup() {
 
 	tunnelConn, err := ssh.Dial("tcp", l.tunnelHost, sshConfig)
 	if err != nil {
-		log.Println("Failed to start SSH tunnel to: "+l.tunnelHost+". Error: ", err)
-		os.Exit(1)
+		log.Fatalf("Failed to start SSH tunnel to %v: %v\n", l.tunnelHost, err)
 	}
-	log.Println("Created SSH tunnel to: " + l.tunnelHost)
+	log.Printf("Setup SSH tunnel to tunnelHost=%v\n", l.tunnelHost)
 
-	localConn, err := tunnelConn.Dial("tcp", remoteTunnelPort)
+	localConn, err := tunnelConn.Dial("tcp", tunnelPortOnRemoteServer)
 	if err != nil {
-		log.Println("Failed to create local tunnel to "+remoteTunnelPort, err)
-		os.Exit(1)
+		log.Fatalf("Failed to create connection to tunnelPortOnRemoteServer=%v: %v\n", tunnelPortOnRemoteServer, err)
 	}
 	l.conn = localConn
-	log.Println("Created local tunnel to " + remoteTunnelPort)
+	log.Printf("Setup connection to tunnelPortOnRemoteServer=%v\n", tunnelPortOnRemoteServer)
 
 	tunnelSession, err := yamux.Server(localConn, nil)
 	if err != nil {
-		log.Println("Failed to start session inside tunnel")
-		os.Exit(1)
+		log.Fatalf("Failed to start session inside tunnel: %v\n", err)
 	}
 	log.Println("Started yamux session inside tunnel")
 	l.sess = tunnelSession
+}
+
+func (l *lambdaTunnelConnection) close() {
+	log.Printf("Closing session")
+	err := l.sess.Close()
+	if err != nil {
+		log.Printf("Error closing session: %v", err)
+	}
+	log.Printf("Closing connection")
+	err = l.conn.Close()
+	if err != nil {
+		log.Printf("Error closing connection: %v", err)
+	}
 }
 
 func setupLambdaTunnelConnection(tunnelHost string, sshPort string, sshUsername string,

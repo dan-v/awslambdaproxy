@@ -11,6 +11,7 @@ import (
 const privateKeyFile = "/tmp/privatekey"
 
 type Request struct {
+	UUID    string `json:"UUID"`
 	Address string `json:"ConnectBackAddress"`
 	SSHPort string `json:"SSHPort"`
 	SSHKey  string `json:"SSHKey"`
@@ -23,20 +24,23 @@ type Response struct {
 }
 
 func Handler(request Request) (Response, error) {
+	log.Printf("Processing request UUID=%v\n", request.UUID)
 	sshKeyData := []byte(request.SSHKey)
 	err := ioutil.WriteFile(privateKeyFile, sshKeyData, 0600)
 	if err != nil {
 		log.Fatal("Failed to write SSH key to disk. ", err)
 	}
 
-	log.Println("Starting lambdaProxyServer")
+	log.Println("Starting proxy server")
 	lambdaProxyServer := startLambdaProxyServer()
+	defer lambdaProxyServer.close()
 
-	log.Println("Establishing tunnel connection to", request.Address)
+	log.Printf("Establishing ssh tunnel connection to %v\n", request.Address)
 	lambdaTunnelConnection, err := setupLambdaTunnelConnection(request.Address, request.SSHPort, request.SSHUser, privateKeyFile)
 	if err != nil {
-		log.Fatal("Failed to establish connection to "+request.Address, err)
+		log.Fatalf("Failed to establish connection to %v: %v\n", request.Address, err)
 	}
+	defer lambdaTunnelConnection.close()
 
 	log.Println("Starting lambdaDataCopyManager")
 	dataCopyManager := newLambdaDataCopyManager(lambdaProxyServer, lambdaTunnelConnection)

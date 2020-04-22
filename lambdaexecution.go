@@ -2,6 +2,7 @@ package awslambdaproxy
 
 import (
 	"encoding/json"
+	"github.com/google/uuid"
 	"log"
 	"time"
 
@@ -20,6 +21,7 @@ type lambdaExecutionManager struct {
 }
 
 type lambdaPayload struct {
+	UUID               string
 	ConnectBackAddress string
 	SSHPort            string
 	SSHKey             string
@@ -29,22 +31,50 @@ type lambdaPayload struct {
 func (l *lambdaExecutionManager) run() {
 	log.Println("Using public IP", l.publicIP)
 	log.Println("Lambda execution frequency", l.frequency)
+	count := 0
+	setInvokeConfig := true
 	for {
+		if count > 0 {
+			setInvokeConfig = false
+		}
 		for region := range l.regions {
-			l.executeFunction(region)
+			l.executeFunction(region, setInvokeConfig)
 			time.Sleep(l.frequency)
 		}
+		count++
 	}
 }
 
-func (l *lambdaExecutionManager) executeFunction(region int) error {
+func (l *lambdaExecutionManager) executeFunction(region int, setInvokeConfig bool) error {
 	log.Println("Executing Lambda function in region", l.regions[region])
 	sess, err := getSessionAWS()
 	if err != nil {
 		return err
 	}
+
 	svc := lambda.New(sess, &aws.Config{Region: aws.String(l.regions[region])})
+
+	if setInvokeConfig {
+		maximumEventAgeInSeconds := int64(1800)
+		maximumRetryAttempts := int64(0)
+		log.Printf("Setting invoke configuration maximumRetryAttempts=%v maximumEventAgeInSeconds=%v\n",
+			maximumRetryAttempts, maximumEventAgeInSeconds)
+		_, err = svc.PutFunctionEventInvokeConfig(&lambda.PutFunctionEventInvokeConfigInput{
+			FunctionName:             aws.String(lambdaFunctionName),
+			MaximumEventAgeInSeconds: aws.Int64(maximumEventAgeInSeconds),
+			MaximumRetryAttempts:     aws.Int64(maximumRetryAttempts),
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	id, err := uuid.NewUUID()
+	if err !=nil {
+		return err
+	}
 	lambdaPayload := lambdaPayload{
+		UUID:               id.String(),
 		ConnectBackAddress: l.publicIP,
 		SSHPort:            l.sshPort,
 		SSHKey:             l.sshKey,
@@ -56,6 +86,8 @@ func (l *lambdaExecutionManager) executeFunction(region int) error {
 		InvocationType: aws.String(lambda.InvocationTypeEvent),
 		Payload:        payload,
 	}
+
+	log.Printf("Invoking Lambda function with UUID=%v\n", lambdaPayload.UUID)
 	_, err = svc.Invoke(params)
 	if err != nil {
 		return errors.Wrap(err, "Failed to execute Lambda function")
@@ -79,7 +111,7 @@ func newLambdaExecutionManager(publicIP string, regions []string, frequency time
 		for {
 			<-onDemandExecution
 			log.Println("Starting new tunnel as existing tunnel failed")
-			executionManager.executeFunction(0)
+			executionManager.executeFunction(0, false)
 			time.Sleep(time.Second * 5)
 		}
 	}()

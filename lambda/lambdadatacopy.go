@@ -4,7 +4,6 @@ import (
 	"io"
 	"log"
 	"net"
-	"os"
 	"sync"
 	"time"
 )
@@ -18,18 +17,18 @@ func (l *lambdaDataCopyManager) run() {
 	for {
 		proxySocketConn, proxySocketErr := net.Dial("tcp", l.lambdaProxyServer.port)
 		if proxySocketErr != nil {
-			log.Println("Failed to open connection to proxy", proxySocketErr)
+			log.Printf("Failed to open connection to proxy: %v\n", proxySocketErr)
 			time.Sleep(time.Second)
 			continue
 		}
-		log.Println("Started connection to proxy on port " + l.lambdaProxyServer.port)
+		log.Printf("Opened local connection to proxy on port %v\n", l.lambdaProxyServer.port)
 
 		tunnelStream, tunnelErr := l.lambdaTunnelConnection.sess.Accept()
 		if tunnelErr != nil {
-			log.Println("Failed to start stream inside session", tunnelErr)
-			os.Exit(1)
+			log.Printf("Failed to start new stream: %v. Exiting function.\n", tunnelErr)
+			return
 		}
-		log.Println("Started stream inside session")
+		log.Println("Started new stream")
 
 		go bidirectionalCopy(tunnelStream, proxySocketConn)
 	}

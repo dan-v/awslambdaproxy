@@ -19,7 +19,7 @@ var (
 	debugProxy 						     bool
 	sshUser, sshPort, regions, listeners string
 	// Max execution time on lambda is 900 seconds currently
-	lambdaMaxFrequency  = time.Duration(890 * time.Second) // leave 10 seconds of leeway
+	lambdaMaxFrequency = time.Duration(time.Second * 860)
 	lambdaMinMemorySize = 128
 	lambdaMaxMemorySize = 1536
 )
@@ -82,7 +82,7 @@ func init() {
 
 	runCmd.Flags().StringVarP(&regions, "regions", "r", "us-west-2", "Regions to "+
 		"run proxy.")
-	runCmd.Flags().DurationVarP(&frequency, "frequency", "f", time.Duration(time.Second*860), "Frequency "+
+	runCmd.Flags().DurationVarP(&frequency, "frequency", "f", lambdaMaxFrequency, "Frequency "+
 		"to execute Lambda function.  Maximum is "+lambdaMaxFrequency.String()+". If multiple "+
 		"lambda-regions are specified, this will cause traffic to rotate round robin at the interval "+
 		"specified here.")

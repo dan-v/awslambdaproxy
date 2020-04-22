@@ -13,6 +13,7 @@ require (
 	github.com/ginuerzh/gost v0.0.0-20200414134316-6e46ac03c7a7
 	github.com/go-ini/ini v1.32.0 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
+	github.com/google/uuid v1.1.1
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/hashicorp/yamux v0.0.0-20190923154419-df201c70410d
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
