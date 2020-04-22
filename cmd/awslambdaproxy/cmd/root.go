@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -39,9 +40,11 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	}
 
+	var replacer = strings.NewReplacer("-", "_", ".", "_")
 	viper.SetConfigName(".awslambdaproxy") // name of config file (without extension)
 	viper.AddConfigPath("$HOME")           // adding home directory as first search path
 	viper.AutomaticEnv()                   // read in environment variables that match
+	viper.SetEnvKeyReplacer(replacer)
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {

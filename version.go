@@ -2,7 +2,7 @@ package awslambdaproxy
 
 import "strings"
 
-const version = "0.0.10"
+const version = "0.0.11"
 
 // LambdaVersion is version of awslambdaproxy
 func LambdaVersion() string {
