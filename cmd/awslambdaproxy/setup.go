@@ -1,10 +1,10 @@
-package cmd
+package awslambdaproxy
 
 import (
 	"fmt"
 	"os"
 
-	"github.com/dan-v/awslambdaproxy"
+	"github.com/dan-v/awslambdaproxy/pkg/server"
 	"github.com/spf13/cobra"
 )
 
@@ -14,7 +14,7 @@ var setupCmd = &cobra.Command{
 	Short: "Setup awslambdaproxy AWS infrastructure",
 	Long:  `This will setup all required AWS infrastructure to run awslambdaproxy.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := awslambdaproxy.SetupLambdaInfrastructure()
+		err := server.SetupLambdaInfrastructure()
 		if err != nil {
 			fmt.Print("Failed to run setup for awslambdaproxy: ", err)
 			os.Exit(1)

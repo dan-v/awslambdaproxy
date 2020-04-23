@@ -1,6 +1,6 @@
 <b>awslambdaproxy</b> is an [AWS Lambda](https://aws.amazon.com/lambda/) powered HTTP/SOCKS web proxy. It provides a constantly rotating IP address for your network traffic from all regions where AWS Lambda is available. The goal is to obfuscate your traffic and make it harder to track you as a user.
 
-![](/images/overview.gif?raw=true)
+![](/assets/images/overview.gif?raw=true)
 
 ## Features
 * HTTP/HTTPS/SOCKS5 proxy protocols support (including authentication).
@@ -16,7 +16,7 @@ Current code status: <b>proof of concept</b>. This is the first Go application t
 ## How it works
 At a high level, awslambdaproxy proxies TCP/UDP traffic through AWS Lambda regional endpoints. To do this, awslambdaproxy is setup on a publicly accessible host (e.g. EC2 instance) and it handles creating Lambda resources that run a proxy server ([ginuerzh/gost](https://github.com/ginuerzh/gost)). Since Lambda does not allow you to connect to bound ports in executing functions, a reverse SSH tunnel is established from the Lambda function to the host running awslambdaproxy. Once a tunnel connection is established, all user traffic is forwarded through this reverse tunnel to the proxy server. Lambda functions have a max execution time of 15 minutes, so there is a goroutine that continuously executes Lambda functions to ensure there is always a live tunnel in place. If multiple regions are specified, user traffic will be routed in a round robin fashion across these regions.
 
-![](/images/how-it-works.png?raw=true)
+![](/assets/images/how-it-works.png?raw=true)
 
 ## Installation
 
@@ -30,7 +30,7 @@ The easiest way is to download a pre-built binary from the [GitHub Releases](htt
 
 2. Optional, but I'd highly recommend taking a look at the Minimal IAM Policies section below. This will allow you to setup minimal permissions required to setup and run the project. Otherwise, if you don't care about security you can always use an access key with full administrator privileges. 
 
-3. `awslambdaproxy` will need access to credentials for AWS in some form. This can be either through exporting environment variables (as shown below), shared crendential file, or an IAM role if assigned to the instance you are running it on. See [this](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html#specifying-credentials) for more details.
+3. `awslambdaproxy` will need access to credentials for AWS in some form. This can be either through exporting environment variables (as shown below), shared credential file, or an IAM role if assigned to the instance you are running it on. See [this](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html#specifying-credentials) for more details.
 
     ```sh
     export AWS_ACCESS_KEY_ID=XXXXXXXXXX
@@ -55,7 +55,7 @@ The easiest way is to download a pre-built binary from the [GitHub Releases](htt
 * Create a user with proper permissions needed to run the setup command. This user can be removed after running the setup command.
 ```
 aws iam create-user --user-name awslambdaproxy-setup
-aws iam put-user-policy --user-name awslambdaproxy-setup --policy-name awslambdaproxy-setup --policy-document file://iam/setup.json
+aws iam put-user-policy --user-name awslambdaproxy-setup --policy-name awslambdaproxy-setup --policy-document file://config/iam/setup.json
 aws iam create-access-key --user-name awslambdaproxy-setup
 {
     "AccessKey": {
@@ -70,7 +70,7 @@ aws iam create-access-key --user-name awslambdaproxy-setup
 * Create a user with proper permission needed to run the proxy.
 ```
 aws iam create-user --user-name awslambdaproxy-run
-aws iam put-user-policy --user-name awslambdaproxy-run --policy-name awslambdaproxy-run --policy-document file://iam/run.json
+aws iam put-user-policy --user-name awslambdaproxy-run --policy-name awslambdaproxy-run --policy-document file://config/iam/run.json
 aws iam create-access-key --user-name awslambdaproxy-run
 {
     "AccessKey": {
@@ -106,7 +106,7 @@ aws iam create-access-key --user-name awslambdaproxy-run
   git clone git@github.com:dan-v/awslambdaproxy.git && cd awslambdaproxy
   ```
 
-3. Run make to build awslambdaproxy. You'll find your `awslambdaproxy` binary in the `build` folder.
+3. Run make to build awslambdaproxy. You'll find your `awslambdaproxy` binary in the `artifacts` folder.
 
   ```sh
   make

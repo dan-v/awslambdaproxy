@@ -1,4 +1,4 @@
-package awslambdaproxy
+package server
 
 // majority of this is borrowed from https://github.com/goadapp/goad/blob/master/infrastructure/infrastructure.go
 
@@ -20,7 +20,7 @@ const (
 	lambdaFunctionRuntime           = "go1.x"
 	lambdaFunctionIamRole           = "awslambdaproxy-role"
 	lambdaFunctionIamRolePolicyName = "awslambdaproxy-role-policy"
-	lambdaFunctionZipLocation       = "data/lambda.zip"
+	lambdaFunctionZipLocation       = "artifacts/lambda.zip"
 )
 
 type lambdaInfrastructure struct {
@@ -165,7 +165,7 @@ func (infra *lambdaInfrastructure) deleteLambdaFunction(svc *lambda.Lambda) erro
 }
 
 func (infra *lambdaInfrastructure) createLambdaFunction(svc *lambda.Lambda, roleArn string, payload []byte) error {
-	function, err := svc.CreateFunction(&lambda.CreateFunctionInput{
+	_, err := svc.CreateFunction(&lambda.CreateFunctionInput{
 		Code: &lambda.FunctionCode{
 			ZipFile: payload,
 		},
@@ -186,11 +186,11 @@ func (infra *lambdaInfrastructure) createLambdaFunction(svc *lambda.Lambda, role
 		}
 		return err
 	}
-	return createLambdaAlias(svc, function.Version)
+	return nil
 }
 
 func (infra *lambdaInfrastructure) updateLambdaFunction(svc *lambda.Lambda, roleArn string, payload []byte) error {
-	function, err := svc.UpdateFunctionCode(&lambda.UpdateFunctionCodeInput{
+	_, err := svc.UpdateFunctionCode(&lambda.UpdateFunctionCodeInput{
 		ZipFile:      payload,
 		FunctionName: aws.String(lambdaFunctionName),
 		Publish:      aws.Bool(true),
@@ -198,7 +198,7 @@ func (infra *lambdaInfrastructure) updateLambdaFunction(svc *lambda.Lambda, role
 	if err != nil {
 		return err
 	}
-	return createLambdaAlias(svc, function.Version)
+	return nil
 }
 
 func lambdaExists(svc *lambda.Lambda) (bool, error) {
@@ -216,15 +216,6 @@ func lambdaExists(svc *lambda.Lambda) (bool, error) {
 	}
 
 	return true, nil
-}
-
-func createLambdaAlias(svc *lambda.Lambda, functionVersion *string) error {
-	_, err := svc.CreateAlias(&lambda.CreateAliasInput{
-		FunctionName:    aws.String(lambdaFunctionName),
-		FunctionVersion: functionVersion,
-		Name:            aws.String(LambdaVersion()),
-	})
-	return err
 }
 
 func (infra *lambdaInfrastructure) createIAMLambdaRole(sess *session.Session, roleName string) (arn string, err error) {

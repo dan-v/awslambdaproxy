@@ -32,7 +32,7 @@ RUN mkdir ${HOME}/.ssh
 EXPOSE 2222
 EXPOSE 8080
 
-COPY docker/sshd_config /etc/ssh/sshd_config
-COPY docker/entrypoint.sh /entrypoint.sh
+COPY build/docker/sshd_config /etc/ssh/sshd_config
+COPY build/docker/entrypoint.sh /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]

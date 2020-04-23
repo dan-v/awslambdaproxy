@@ -1,4 +1,4 @@
-package cmd
+package awslambdaproxy
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dan-v/awslambdaproxy"
+	"github.com/dan-v/awslambdaproxy/pkg/server"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -65,7 +65,7 @@ var runCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		awslambdaproxy.ServerInit(aSSHUser, aSSHPort, aRegions, aMemory, aFrequency, aListeners, aTimeout, aDebugProxy)
+		server.ServerInit(aSSHUser, aSSHPort, aRegions, aMemory, aFrequency, aListeners, aTimeout, aDebugProxy)
 	},
 }
 

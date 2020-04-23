@@ -1,4 +1,4 @@
-package awslambdaproxy
+package server
 
 import (
 	"bytes"
