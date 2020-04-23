@@ -70,7 +70,7 @@ func (l *lambdaExecutionManager) executeFunction(region int, setInvokeConfig boo
 	}
 
 	id, err := uuid.NewUUID()
-	if err !=nil {
+	if err != nil {
 		return err
 	}
 	lambdaPayload := lambdaPayload{

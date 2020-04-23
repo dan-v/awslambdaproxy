@@ -31,6 +31,7 @@ type stringList []string
 func (l *stringList) String() string {
 	return fmt.Sprintf("%s", *l)
 }
+
 func (l *stringList) Set(value string) error {
 	*l = append(*l, value)
 	return nil

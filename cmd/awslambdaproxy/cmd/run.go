@@ -16,10 +16,10 @@ import (
 var (
 	frequency                            time.Duration
 	memory                               int64
-	debugProxy 						     bool
+	debugProxy                           bool
 	sshUser, sshPort, regions, listeners string
 	// Max execution time on lambda is 900 seconds currently
-	lambdaMaxFrequency = time.Duration(time.Second * 860)
+	lambdaMaxFrequency  = time.Duration(time.Second * 860)
 	lambdaMinMemorySize = 128
 	lambdaMaxMemorySize = 1536
 )

@@ -8,7 +8,7 @@ import (
 
 // ServerInit is the main entrypoint for the server portion of awslambdaproxy
 func ServerInit(sshUser string, sshPort string, regions []string, memory int64, frequency time.Duration,
-		listeners []string, timeout int64, debugProxy bool) {
+	listeners []string, timeout int64, debugProxy bool) {
 	log.Printf("sshUser=%v, sshPort=%v regions=%v memory=%v frequency=%v listeners=%v timeout=%v debugProxy=%v\n",
 		sshUser, sshPort, regions, memory, frequency, listeners, timeout, debugProxy)
 
