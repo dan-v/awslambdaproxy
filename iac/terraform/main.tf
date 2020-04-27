@@ -224,11 +224,6 @@ resource "aws_iam_role" "lambda" {
   }
 }
 
-resource "aws_iam_role_policy_attachment" "test-attach" {
-  role       = aws_iam_role.lambda.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
-}
-
 resource "aws_iam_role_policy" "lambda" {
   policy = data.aws_iam_policy_document.lambda.json
   role   = aws_iam_role.lambda.id
