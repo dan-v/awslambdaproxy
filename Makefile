@@ -22,5 +22,6 @@ clean:
 all-zip: all
 	mkdir ./build/zip
 	zip -jr ./build/zip/awslambdaproxy-linux-x86-64 ./build/linux/x86-64/awslambdaproxy
+    cp data/lambda.zip ./build/zip/
 
 .PHONY: lambda bindata
