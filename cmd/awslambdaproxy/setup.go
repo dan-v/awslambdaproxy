@@ -1,8 +1,7 @@
 package awslambdaproxy
 
 import (
-	"fmt"
-	"os"
+	"log"
 
 	"github.com/dan-v/awslambdaproxy/pkg/server"
 	"github.com/spf13/cobra"
@@ -11,13 +10,16 @@ import (
 // setupCmd represents the setup command
 var setupCmd = &cobra.Command{
 	Use:   "setup",
-	Short: "Setup awslambdaproxy AWS infrastructure",
-	Long:  `This will setup all required AWS infrastructure to run awslambdaproxy.`,
+	Short: "setup awslambdaproxy aws infrastructure",
+	Long:  `this will setup all required aws infrastructure to run awslambdaproxy.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		if _, err := server.GetSessionAWS(); err != nil {
+			log.Fatal("unable to find valid aws credentials")
+		}
+
 		err := server.SetupLambdaInfrastructure()
 		if err != nil {
-			fmt.Print("Failed to run setup for awslambdaproxy: ", err)
-			os.Exit(1)
+			log.Fatal("failed to run setup for awslambdaproxy: ", err)
 		}
 	},
 }
