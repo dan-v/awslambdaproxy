@@ -32,7 +32,7 @@ type lambdaInfrastructure struct {
 
 // SetupLambdaInfrastructure sets up IAM role needed to run awslambdaproxy
 func SetupLambdaInfrastructure() error {
-	sess, err := getSessionAWS()
+	sess, err := GetSessionAWS()
 	if err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func SetupLambdaInfrastructure() error {
 }
 
 func (infra *lambdaInfrastructure) setup() error {
-	sess, err := getSessionAWS()
+	sess, err := GetSessionAWS()
 	if err != nil {
 		return err
 	}
@@ -184,18 +184,6 @@ func (infra *lambdaInfrastructure) createLambdaFunction(svc *lambda.Lambda, role
 				return infra.createLambdaFunction(svc, roleArn, payload)
 			}
 		}
-		return err
-	}
-	return nil
-}
-
-func (infra *lambdaInfrastructure) updateLambdaFunction(svc *lambda.Lambda, roleArn string, payload []byte) error {
-	_, err := svc.UpdateFunctionCode(&lambda.UpdateFunctionCodeInput{
-		ZipFile:      payload,
-		FunctionName: aws.String(lambdaFunctionName),
-		Publish:      aws.Bool(true),
-	})
-	if err != nil {
 		return err
 	}
 	return nil
