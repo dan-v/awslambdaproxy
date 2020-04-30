@@ -3,10 +3,10 @@ RUN apt-get update -y
 RUN apt-get install -y zip
 RUN go get -u github.com/go-bindata/go-bindata/...
 ADD . /src
-RUN cd /src && make linux
+RUN cd /src && make build
 
 FROM alpine:latest
-COPY --from=build-env /src/build/linux/x86-64/awslambdaproxy /app/
+COPY --from=build-env /src/artifacts/server/linux/awslambdaproxy /app/
 
 ENV AWS_ACCESS_KEY_ID=
 ENV AWS_SECRET_ACCESS_KEY=
