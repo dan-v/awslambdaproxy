@@ -1,19 +1,13 @@
 package server
 
 import (
-	"bytes"
 	"io"
-	"io/ioutil"
-	"net/http"
 	"sync"
+
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/pkg/errors"
-)
-
-const (
-	getIPUrl = "http://checkip.amazonaws.com/"
 )
 
 func bidirectionalCopy(src io.ReadWriteCloser, dst io.ReadWriteCloser) {
@@ -35,20 +29,7 @@ func bidirectionalCopy(src io.ReadWriteCloser, dst io.ReadWriteCloser) {
 	wg.Wait()
 }
 
-func getPublicIP() (string, error) {
-	resp, err := http.Get(getIPUrl)
-	if err != nil {
-		return "", errors.Wrap(err, "Failed to get IP address from "+getIPUrl)
-	}
-	defer resp.Body.Close()
-	buf, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", errors.Wrap(err, "Failed to read IP address from "+getIPUrl)
-	}
-	return string(bytes.TrimSpace(buf)), nil
-}
-
-func getSessionAWS() (*session.Session, error) {
+func GetSessionAWS() (*session.Session, error) {
 	sess, err := session.NewSession(aws.NewConfig())
 	if err != nil {
 		return nil, err
@@ -57,4 +38,18 @@ func getSessionAWS() (*session.Session, error) {
 		return nil, err
 	}
 	return sess, nil
+}
+
+func GetValidLambdaRegions() []string {
+	resolver := endpoints.DefaultResolver()
+	partitions := resolver.(endpoints.EnumPartitions).Partitions()
+	var validLambdaRegions []string
+	for _, p := range partitions {
+		if p.ID() == "aws" {
+			for k := range p.Regions() {
+				validLambdaRegions = append(validLambdaRegions, k)
+			}
+		}
+	}
+	return validLambdaRegions
 }
