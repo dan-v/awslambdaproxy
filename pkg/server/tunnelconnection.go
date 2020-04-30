@@ -190,7 +190,7 @@ func (t *connectionManager) monitorTunnelSessionHealth(connectionID string) {
 			numStreams := t.tunnelConnections[connectionID].sess.NumStreams()
 			if numStreams > 0 {
 				log.Printf("Tunnel '%v' that is being closed still has %v open streams. "+
-					"Delaying cleanup for %v seconds.\n",
+					"Delaying cleanup for %v.\n",
 					connectionID, strconv.Itoa(numStreams), LambdaDelayedCleanupTime.String())
 				time.Sleep(LambdaDelayedCleanupTime)
 				log.Println("Delayed cleanup now running for ", connectionID)
