@@ -25,17 +25,20 @@ var runCmd = &cobra.Command{
 	Short: "run awslambdaproxy",
 	Long: `this will execute awslambdaproxy in the specified regions. examples:
 
-# example 1 - execute proxy in four different regions with rotation happening every 60 seconds
+# execute proxy in four different regions with rotation happening every 60 seconds
 ./awslambdaproxy run -r us-west-2,us-west-1,us-east-1,us-east-2 -f 60s
 
-# example 2 - choose a different port and username/password for proxy and add another listener on localhost with no auth
-./awslambdaproxy run -r us-west-2 -l "admin:admin@:8888,localhost:9090"
+# choose a different port and username/password for proxy and add another listener on localhost with no auth
+./awslambdaproxy run -l "admin:admin@:8888,localhost:9090"
 
-# example 3 - increase function memory size for better network performance
-./awslambdaproxy run -r us-west-2 -m 512
+# bypass certain domains from using lambda proxy
+./awslambdaproxy run -b "*.websocket.org,*.youtube.com"
 
-# example 4 - bypass certain domains from using lambda proxy
-./awslambdaproxy run -r us-west-2 -b "*.websocket.org,*.youtube.com"
+# specify a dns server for the proxy server to use for dns lookups
+./awslambdaproxy run -l "admin:awslambdaproxy@:8080?dns=1.1.1.1"
+
+# increase function memory size for better network performance
+./awslambdaproxy run -m 512
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		aDebug := viper.GetBool("debug")
