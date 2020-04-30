@@ -55,7 +55,7 @@ The easiest way is to download a pre-built binary from the [GitHub Releases](htt
 * Create a user with proper permissions needed to run the setup command. This user can be removed after running the setup command.
 ```
 aws iam create-user --user-name awslambdaproxy-setup
-aws iam put-user-policy --user-name awslambdaproxy-setup --policy-name awslambdaproxy-setup --policy-document file://config/iam/setup.json
+aws iam put-user-policy --user-name awslambdaproxy-setup --policy-name awslambdaproxy-setup --policy-document file://deployment/iam/setup.json
 aws iam create-access-key --user-name awslambdaproxy-setup
 {
     "AccessKey": {
@@ -70,7 +70,7 @@ aws iam create-access-key --user-name awslambdaproxy-setup
 * Create a user with proper permission needed to run the proxy.
 ```
 aws iam create-user --user-name awslambdaproxy-run
-aws iam put-user-policy --user-name awslambdaproxy-run --policy-name awslambdaproxy-run --policy-document file://config/iam/run.json
+aws iam put-user-policy --user-name awslambdaproxy-run --policy-name awslambdaproxy-run --policy-document file://deployment/iam/run.json
 aws iam create-access-key --user-name awslambdaproxy-run
 {
     "AccessKey": {
