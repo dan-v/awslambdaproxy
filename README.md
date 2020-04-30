@@ -50,6 +50,24 @@ The easiest way is to download a pre-built binary from the [GitHub Releases](htt
     
 6. Configure your web browser (or OS) to use the SOCKS5 proxy on the publicly accessible host running `awslambdaproxy` on port 8080.
 
+## Examples
+```
+# execute proxy in four different regions with rotation happening every 60 seconds
+./awslambdaproxy run -r us-west-2,us-west-1,us-east-1,us-east-2 -f 60s
+
+# choose a different port and username/password for proxy and add another listener on localhost with no auth
+./awslambdaproxy run -l "admin:admin@:8888,localhost:9090"
+
+# bypass certain domains from using lambda proxy
+./awslambdaproxy run -b "*.websocket.org,*.youtube.com"
+
+# specify a dns server for the proxy server to use for dns lookups
+./awslambdaproxy run -l "admin:awslambdaproxy@:8080?dns=1.1.1.1"
+
+# increase function memory size for better network performance
+./awslambdaproxy run -m 512
+```
+
 ## Minimal IAM Policies
 * This assumes you have the AWS CLI setup with an admin user
 * Create a user with proper permissions needed to run the setup command. This user can be removed after running the setup command.
