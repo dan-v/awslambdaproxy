@@ -87,3 +87,4 @@ bindata.go
 .DS_Store
 vendor/
 artifacts
+coverage.html
