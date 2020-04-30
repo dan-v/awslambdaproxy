@@ -6,9 +6,7 @@ ARCH := amd64
 PACKAGE := github.com/dan-v/$(TARGET)
 
 .PHONY: \
-	help \
 	clean \
-	clean-artifacts \
 	tools \
 	test \
 	coverage \
@@ -16,34 +14,15 @@ PACKAGE := github.com/dan-v/$(TARGET)
 	lint \
 	fmt \
 	build \
-	build-lambda \
-	build-server \
+	lambda-build \
+	server-build-linux \
+	server-build-osx \
 	doc \
-	version \
-	release
+	release \
+	docker-build \
+	docker-release \
 
-all: tools fmt lint vet build release
-
-help:
-	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
-	@echo ''
-	@echo 'Available targets are:'
-	@echo ''
-	@echo '    help               Show this help screen.'
-	@echo '    clean              Remove binaries, artifacts and releases.'
-	@echo '    tools              Install tools needed by the project.'
-	@echo '    test               Run unit tests.'
-	@echo '    coverage           Report code tests coverage.'
-	@echo '    vet                Run go vet.'
-	@echo '    lint               Run golint.'
-	@echo '    fmt                Run go fmt.'
-	@echo '    build              Build all.'
-	@echo '    build-lambda       Build lambda function.'
-	@echo '    build-server       Build server.'
-	@echo '    release            Zip up final artifact'
-	@echo '    doc                Start Go documentation server on port 8080.'
-	@echo '    version            Display Go version.'
-	@echo ''
+all: tools fmt lint vet test build release
 
 print-%:
 	@echo $* = $($*)
@@ -79,31 +58,36 @@ lint:
 fmt:
 	go fmt ./...
 
-build-lambda:
+lambda-build:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o artifacts/lambda/main ./pkg/lambda
 	zip -jr artifacts/lambda artifacts/lambda
 	go-bindata -nocompress -pkg server -o pkg/server/bindata.go artifacts/lambda.zip
+	mv artifacts/lambda.zip artifacts/lambda-$(VERSION).zip
 
-build-server:
+server-build-linux:
 	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build -ldflags \
 	    "-X $(PACKAGE)/cmd/awslambdaproxy.version=$(VERSION)" \
 	    -v -o $(CURDIR)/artifacts/server/$(OS)/$(TARGET) ./cmd/main.go
 
-build-server-osx:
+server-build-osx:
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags \
 	    "-X $(PACKAGE)/cmd/awslambdaproxy.version=$(VERSION)" \
 	    -v -o $(CURDIR)/artifacts/server/darwin/$(TARGET) ./cmd/main.go
 
-build: build-lambda build-server
+build: lambda-build server-build-linux
 
-build-osx: build-lambda build-server-osx
+build-osx: lambda-build server-build-osx
 
 doc:
 	godoc -http=:8080 -index
 
-version:
-	@go version
-
 release:
 	mkdir -p ./artifacts
 	zip -jr ./artifacts/$(TARGET)-$(OS)-$(VERSION).zip ./artifacts/server/$(OS)/$(TARGET)
+
+docker:
+	docker build . -t vdan/awslambdaproxy:$(VERSION) -t vdan/awslambdaproxy:latest
+
+docker-release:
+	docker push vdan/awslambdaproxy:$(VERSION)
+	docker push vdan/awslambdaproxy:latest
