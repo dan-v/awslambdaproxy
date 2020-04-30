@@ -17,6 +17,7 @@ import (
 )
 
 const (
+	checkIPURL  = "http://checkip.amazonaws.com"
 	maxTunnels  = 10
 	forwardPort = "8082"
 	tunnelPort  = "8081"
@@ -132,7 +133,7 @@ func (t *connectionManager) getLambdaExternalIP() (string, error) {
 		return "", err
 	}
 
-	url, err := url.Parse(getIPUrl)
+	ipURL, err := url.Parse(checkIPURL)
 	if err != nil {
 		return "", err
 	}
@@ -143,7 +144,7 @@ func (t *connectionManager) getLambdaExternalIP() (string, error) {
 	client := &http.Client{
 		Transport: transport,
 	}
-	request, err := http.NewRequest("GET", url.String(), nil)
+	request, err := http.NewRequest("GET", ipURL.String(), nil)
 	if err != nil {
 		return "", err
 	}
@@ -161,8 +162,14 @@ func (t *connectionManager) getLambdaExternalIP() (string, error) {
 }
 
 func (t *connectionManager) removeTunnelConnection(connectionID string) {
-	t.tunnelConnections[connectionID].sess.Close()
-	t.tunnelConnections[connectionID].conn.Close()
+	err := t.tunnelConnections[connectionID].sess.Close()
+	if err != nil {
+		log.Printf("error closing session for connectionID=%v: %v", connectionID, err)
+	}
+	err = t.tunnelConnections[connectionID].conn.Close()
+	if err != nil {
+		log.Printf("error closing connection for connectionID=%v: %v", connectionID, err)
+	}
 	t.tunnelMutex.Lock()
 	delete(t.tunnelConnections, connectionID)
 	t.tunnelMutex.Unlock()
@@ -182,8 +189,10 @@ func (t *connectionManager) monitorTunnelSessionHealth(connectionID string) {
 		if time.Since(t.tunnelConnections[connectionID].time).Seconds() > t.tunnelExpectedRuntime {
 			numStreams := t.tunnelConnections[connectionID].sess.NumStreams()
 			if numStreams > 0 {
-				log.Println("Tunnel " + connectionID + " that is being closed still has open streams: " + strconv.Itoa(numStreams) + ". Delaying cleanup.")
-				time.Sleep(20 * time.Second)
+				log.Printf("Tunnel '%v' that is being closed still has %v open streams. "+
+					"Delaying cleanup for %v seconds.\n",
+					connectionID, strconv.Itoa(numStreams), LambdaDelayedCleanupTime.String())
+				time.Sleep(LambdaDelayedCleanupTime)
 				log.Println("Delayed cleanup now running for ", connectionID)
 			} else {
 				log.Println("Tunnel " + connectionID + " is safe to close")
