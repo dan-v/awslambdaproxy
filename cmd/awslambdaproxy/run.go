@@ -2,9 +2,8 @@ package awslambdaproxy
 
 import (
 	"fmt"
-	"os"
+	"log"
 	"os/user"
-	"strconv"
 	"strings"
 	"time"
 
@@ -15,13 +14,9 @@ import (
 
 var (
 	frequency                            time.Duration
-	memory                               int64
-	debugProxy                           bool
+	memory                               int
+	debug, debugProxy                    bool
 	sshUser, sshPort, regions, listeners string
-	// Max execution time on lambda is 900 seconds currently
-	lambdaMaxFrequency  = time.Duration(time.Second * 860)
-	lambdaMinMemorySize = 128
-	lambdaMaxMemorySize = 1536
 )
 
 // runCmd represents the run command
@@ -40,39 +35,40 @@ var runCmd = &cobra.Command{
 ./awslambdaproxy run -r us-west-2 -m 512
 `,
 	Run: func(cmd *cobra.Command, args []string) {
+		aDebug := viper.GetBool("debug")
 		aDebugProxy := viper.GetBool("debug-proxy")
 		aSSHUser := viper.GetString("ssh-user")
 		aSSHPort := viper.GetString("ssh-port")
 		aRegions := strings.Split(viper.GetString("regions"), ",")
-		aMemory := viper.GetInt64("memory")
+		aMemory := viper.GetInt("memory")
 		aFrequency := viper.GetDuration("frequency")
 		aListeners := strings.Split(viper.GetString("listeners"), ",")
-		aTimeout := int64(viper.GetDuration("frequency").Seconds()) + int64(30)
 
-		// check memory
-		if aMemory > int64(lambdaMaxMemorySize) {
-			fmt.Println("Maximum lambda memory size is " + strconv.Itoa(lambdaMaxMemorySize) + " MB")
-			os.Exit(1)
-		}
-		if aMemory < int64(lambdaMinMemorySize) {
-			fmt.Println("Minimum lambda memory size is " + strconv.Itoa(lambdaMinMemorySize) + " MB")
-			os.Exit(1)
+		if _, err := server.GetSessionAWS(); err != nil {
+			log.Fatal("unable to find valid aws credentials")
 		}
 
-		// check frequency
-		if aFrequency > lambdaMaxFrequency {
-			fmt.Println("Maximum lambda frequency is " + lambdaMaxFrequency.String() + " seconds")
-			os.Exit(1)
+		s, err := server.New(server.Config{
+			LambdaRegions:            aRegions,
+			LambdaMemory:             aMemory,
+			LambdaExecutionFrequency: aFrequency,
+			ProxyListeners:           aListeners,
+			ProxyDebug:               aDebugProxy,
+			ReverseTunnelSSHUser:     aSSHUser,
+			ReverseTunnelSSHPort:     aSSHPort,
+			Debug:                    aDebug,
+		})
+		if err != nil {
+			log.Fatal(err)
 		}
-
-		server.ServerInit(aSSHUser, aSSHPort, aRegions, aMemory, aFrequency, aListeners, aTimeout, aDebugProxy)
+		s.Run()
 	},
 }
 
 func getCurrentUserName() string {
-	user, _ := user.Current()
-	if user != nil {
-		return user.Username
+	u, _ := user.Current()
+	if u != nil {
+		return u.Username
 	}
 	return ""
 }
@@ -80,21 +76,28 @@ func getCurrentUserName() string {
 func init() {
 	RootCmd.AddCommand(runCmd)
 
-	runCmd.Flags().StringVarP(&regions, "regions", "r", "us-west-2", "Regions to "+
-		"run proxy.")
-	runCmd.Flags().DurationVarP(&frequency, "frequency", "f", lambdaMaxFrequency, "Frequency "+
-		"to execute Lambda function.  Maximum is "+lambdaMaxFrequency.String()+". If multiple "+
-		"lambda-regions are specified, this will cause traffic to rotate round robin at the interval "+
-		"specified here.")
-	runCmd.Flags().Int64VarP(&memory, "memory", "m", 128, "Memory size in MB for Lambda function. "+
-		"Higher memory may allow for faster network throughput.")
-	runCmd.Flags().StringVarP(&listeners, "listeners", "l", "admin:awslambdaproxy@:8080", "Add as many listeners"+
-		"as you'd like.")
-	runCmd.Flags().StringVarP(&sshUser, "ssh-user", "", getCurrentUserName(), "SSH user for tunnel "+
-		"connections from Lambda.")
-	runCmd.Flags().StringVarP(&sshPort, "ssh-port", "", "22", "SSH port for tunnel "+
-		"connections from Lambda.")
-	runCmd.Flags().BoolVar(&debugProxy, "debug-proxy", false, "enable debug logging for proxy")
+	runCmd.Flags().StringVarP(&regions, "regions", "r", "us-west-2",
+		fmt.Sprintf("regions to run proxy. valid regions include %v", server.GetValidLambdaRegions()))
+	runCmd.Flags().DurationVarP(&frequency, "frequency", "f", server.LambdaMaxExecutionFrequency,
+		fmt.Sprintf("frequency to execute Lambda function. minimum is %v and maximum is %v. "+
+			"if multiple regions are specified, this will cause traffic to rotate round robin at the interval "+
+			"specified here", server.LambdaMinExecutionFrequency.String(), server.LambdaMaxExecutionFrequency.String()))
+	runCmd.Flags().IntVarP(&memory, "memory", "m", 128,
+		fmt.Sprintf("memory size in MB for lambda function. minimum is %v and maximum is %v. "+
+			"higher memory size may allow for faster network throughput.",
+			server.LambdaMinMemorySize, server.LambdaMaxMemorySize))
+	runCmd.Flags().StringVarP(&listeners, "listeners", "l", "admin:awslambdaproxy@:8080",
+		"defines the listening port and authentication details in form [scheme://][user:pass@host]:port. "+
+			"add as many listeners as you'd like. see documentation for gost for more details "+
+			"https://github.com/ginuerzh/gost/blob/master/README_en.md#getting-started.")
+	runCmd.Flags().StringVarP(&sshUser, "ssh-user", "", getCurrentUserName(),
+		"ssh user for tunnel connections from lambda.")
+	runCmd.Flags().StringVarP(&sshPort, "ssh-port", "", "22",
+		"ssh port for tunnel connections from lambda.")
+	runCmd.Flags().BoolVar(&debugProxy, "debug-proxy", false,
+		"enable debug logging for proxy (note: this will log your visited domains)")
+	runCmd.Flags().BoolVar(&debug, "debug", false,
+		"enable general debug logging")
 
 	viper.BindPFlag("regions", runCmd.Flags().Lookup("regions"))
 	viper.BindPFlag("frequency", runCmd.Flags().Lookup("frequency"))
@@ -103,4 +106,5 @@ func init() {
 	viper.BindPFlag("ssh-port", runCmd.Flags().Lookup("ssh-port"))
 	viper.BindPFlag("listeners", runCmd.Flags().Lookup("listeners"))
 	viper.BindPFlag("debug-proxy", runCmd.Flags().Lookup("debug-proxy"))
+	viper.BindPFlag("debug", runCmd.Flags().Lookup("debug"))
 }
