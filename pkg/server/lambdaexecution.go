@@ -2,9 +2,10 @@ package server
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
 	"log"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/lambda"
@@ -38,7 +39,10 @@ func (l *lambdaExecutionManager) run() {
 			setInvokeConfig = false
 		}
 		for region := range l.regions {
-			l.executeFunction(region, setInvokeConfig)
+			err := l.executeFunction(region, setInvokeConfig)
+			if err != nil {
+				log.Println(err)
+			}
 			time.Sleep(l.frequency)
 		}
 		count++
@@ -47,7 +51,7 @@ func (l *lambdaExecutionManager) run() {
 
 func (l *lambdaExecutionManager) executeFunction(region int, setInvokeConfig bool) error {
 	log.Println("Executing Lambda function in region", l.regions[region])
-	sess, err := getSessionAWS()
+	sess, err := GetSessionAWS()
 	if err != nil {
 		return err
 	}
@@ -111,7 +115,10 @@ func newLambdaExecutionManager(publicIP string, regions []string, frequency time
 		for {
 			<-onDemandExecution
 			log.Println("Starting new tunnel as existing tunnel failed")
-			executionManager.executeFunction(0, false)
+			err := executionManager.executeFunction(0, false)
+			if err != nil {
+				log.Println(err)
+			}
 			time.Sleep(time.Second * 5)
 		}
 	}()
