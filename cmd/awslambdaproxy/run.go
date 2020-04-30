@@ -13,26 +13,29 @@ import (
 )
 
 var (
-	frequency                            time.Duration
-	memory                               int
-	debug, debugProxy                    bool
-	sshUser, sshPort, regions, listeners string
+	frequency                                    time.Duration
+	memory                                       int
+	debug, debugProxy                            bool
+	sshUser, sshPort, regions, listeners, bypass string
 )
 
 // runCmd represents the run command
 var runCmd = &cobra.Command{
 	Use:   "run",
-	Short: "Run awslambdaproxy",
-	Long: `This will execute awslambdaproxy in regions specified. Examples:
+	Short: "run awslambdaproxy",
+	Long: `this will execute awslambdaproxy in the specified regions. examples:
 
-# Example 1 - Execute proxy in four different regions with rotation happening every 60 seconds
+# example 1 - execute proxy in four different regions with rotation happening every 60 seconds
 ./awslambdaproxy run -r us-west-2,us-west-1,us-east-1,us-east-2 -f 60s
 
-# Example 2 - Choose a different port and username/password for proxy and add another listener on localhost with no auth
+# example 2 - choose a different port and username/password for proxy and add another listener on localhost with no auth
 ./awslambdaproxy run -r us-west-2 -l "admin:admin@:8888,localhost:9090"
 
-# Example 3 - Increase function memory size for better network performance
+# example 3 - increase function memory size for better network performance
 ./awslambdaproxy run -r us-west-2 -m 512
+
+# example 4 - bypass certain domains from using lambda proxy
+./awslambdaproxy run -r us-west-2 -b "*.websocket.org,*.youtube.com"
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		aDebug := viper.GetBool("debug")
@@ -43,6 +46,7 @@ var runCmd = &cobra.Command{
 		aMemory := viper.GetInt("memory")
 		aFrequency := viper.GetDuration("frequency")
 		aListeners := strings.Split(viper.GetString("listeners"), ",")
+		aBypass := viper.GetString("bypass")
 
 		if _, err := server.GetSessionAWS(); err != nil {
 			log.Fatal("unable to find valid aws credentials")
@@ -56,6 +60,7 @@ var runCmd = &cobra.Command{
 			ProxyDebug:               aDebugProxy,
 			ReverseTunnelSSHUser:     aSSHUser,
 			ReverseTunnelSSHPort:     aSSHPort,
+			Bypass:                   aBypass,
 			Debug:                    aDebug,
 		})
 		if err != nil {
@@ -77,7 +82,8 @@ func init() {
 	RootCmd.AddCommand(runCmd)
 
 	runCmd.Flags().StringVarP(&regions, "regions", "r", "us-west-2",
-		fmt.Sprintf("regions to run proxy. valid regions include %v", server.GetValidLambdaRegions()))
+		fmt.Sprintf("comma separted list of regions to run proxy (e.g. us-west-2,us-west-1,us-east-1). "+
+			"valid regions include %v", server.GetValidLambdaRegions()))
 	runCmd.Flags().DurationVarP(&frequency, "frequency", "f", server.LambdaMaxExecutionFrequency,
 		fmt.Sprintf("frequency to execute Lambda function. minimum is %v and maximum is %v. "+
 			"if multiple regions are specified, this will cause traffic to rotate round robin at the interval "+
@@ -98,6 +104,9 @@ func init() {
 		"enable debug logging for proxy (note: this will log your visited domains)")
 	runCmd.Flags().BoolVar(&debug, "debug", false,
 		"enable general debug logging")
+	runCmd.Flags().StringVarP(&bypass, "bypass", "b", "",
+		"comma separated list of domains/ips to bypass lambda proxy (e.g. *.websocket.org,*.youtube.com). "+
+			"note that when using sock5 proxy mode you'll need to be remotely resolving dns for this to work.")
 
 	viper.BindPFlag("regions", runCmd.Flags().Lookup("regions"))
 	viper.BindPFlag("frequency", runCmd.Flags().Lookup("frequency"))
@@ -107,4 +116,5 @@ func init() {
 	viper.BindPFlag("listeners", runCmd.Flags().Lookup("listeners"))
 	viper.BindPFlag("debug-proxy", runCmd.Flags().Lookup("debug-proxy"))
 	viper.BindPFlag("debug", runCmd.Flags().Lookup("debug"))
+	viper.BindPFlag("bypass", runCmd.Flags().Lookup("bypass"))
 }

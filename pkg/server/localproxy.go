@@ -2,6 +2,7 @@ package server
 
 import (
 	"crypto/tls"
+	"fmt"
 	"log"
 
 	"github.com/ginuerzh/gost"
@@ -47,13 +48,17 @@ func (l *LocalProxy) run() {
 }
 
 // NewLocalProxy starts a local proxy that will forward to proxy running in Lambda
-func NewLocalProxy(listeners []string, debug bool) (*LocalProxy, error) {
-	if debug {
+func NewLocalProxy(listeners []string, debugProxy bool, bypass string) (*LocalProxy, error) {
+	if debugProxy {
 		gost.SetLogger(&gost.LogLogger{})
+	}
+	fproxy := forwardProxy
+	if bypass != "" {
+		fproxy += fmt.Sprintf("?bypass=%v", bypass)
 	}
 	l := &LocalProxy{
 		listeners:    listeners,
-		forwardProxy: forwardProxy,
+		forwardProxy: fproxy,
 	}
 	go l.run()
 	return l, nil

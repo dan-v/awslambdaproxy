@@ -53,6 +53,8 @@ type Config struct {
 	ReverseTunnelSSHPort string
 	// Debug enables general debug logging
 	Debug bool
+	// Bypass is a comma separated list of ips/domains to bypass proxy
+	Bypass string
 }
 
 // Server is the long running server component of awslambdaproxy
@@ -67,6 +69,7 @@ type Server struct {
 	reverseTunnelSSHUser     string
 	reverseTunnelSSHPort     string
 	debug                    bool
+	bypass                   string
 	logger                   *logrus.Logger
 }
 
@@ -93,6 +96,7 @@ func New(config Config) (*Server, error) {
 		reverseTunnelSSHUser:     config.ReverseTunnelSSHUser,
 		reverseTunnelSSHPort:     config.ReverseTunnelSSHPort,
 		debug:                    config.Debug,
+		bypass:                   config.Bypass,
 		logger:                   logger,
 	}
 
@@ -107,6 +111,7 @@ func New(config Config) (*Server, error) {
 		"reverseTunnelSSHUser":     s.reverseTunnelSSHUser,
 		"reverseTunnelSSHPort":     s.reverseTunnelSSHPort,
 		"debug":                    s.debug,
+		"bypass":                   s.bypass,
 	}).Info("server has been configured with the following values")
 
 	return s, nil
@@ -131,7 +136,7 @@ func (s *Server) Run() {
 	}
 
 	s.logger.Infof("starting local proxy")
-	localProxy, err := NewLocalProxy(s.proxyListeners, s.proxyDebug)
+	localProxy, err := NewLocalProxy(s.proxyListeners, s.proxyDebug, s.bypass)
 	if err != nil {
 		s.logger.WithError(err).Fatalf("failed to setup local proxy")
 	}
