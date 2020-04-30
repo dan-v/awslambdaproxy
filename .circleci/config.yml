@@ -7,7 +7,6 @@ jobs:
     steps:
       - checkout
       - run: go get -u github.com/go-bindata/go-bindata/...
-      - run: make all-zip
+      - run: make release
       - store_artifacts:
-          path: build/zip/awslambdaproxy-linux-x86-64.zip
-          destination: awslambdaproxy-linux-x86-64.zip
+          path: artifacts
