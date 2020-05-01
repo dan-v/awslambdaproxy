@@ -85,15 +85,8 @@ release:
 	mkdir -p ./artifacts
 	zip -jr ./artifacts/$(TARGET)-$(OS)-$(VERSION).zip ./artifacts/server/$(OS)/$(TARGET)
 
-<<<<<<< HEAD
-all-zip: all
-	mkdir ./build/zip
-	zip -jr ./build/zip/awslambdaproxy-linux-x86-64 ./build/linux/x86-64/awslambdaproxy
-	cp data/lambda.zip ./build/zip/
-=======
 docker:
 	docker build . -t vdan/awslambdaproxy:$(VERSION) -t vdan/awslambdaproxy:latest
->>>>>>> e8cc220d5edad0cbbac20ecd5143c1000ec2cda1
 
 docker-release:
 	docker push vdan/awslambdaproxy:$(VERSION)

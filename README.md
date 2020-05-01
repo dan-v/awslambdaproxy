@@ -18,7 +18,6 @@ At a high level, awslambdaproxy proxies TCP/UDP traffic through AWS Lambda regio
 ![](/assets/images/how-it-works.png?raw=true)
 
 ## Installation
-
 - [Manual](#manual)
 - [Terraform](#terraform)
 
@@ -34,19 +33,19 @@ The easiest way is to download a pre-built binary from the [GitHub Releases](htt
 
 3. `awslambdaproxy` will need access to credentials for AWS in some form. This can be either through exporting environment variables (as shown below), shared credential file, or an IAM role if assigned to the instance you are running it on. See [this](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html#specifying-credentials) for more details.
 
-    ```shell script
+    ```sh
     export AWS_ACCESS_KEY_ID=XXXXXXXXXX
     export AWS_SECRET_ACCESS_KEY=YYYYYYYYYYYYYYYYYYYYYY
     ```
 4. Run `awslambdaproxy setup`. 
 
-    ```shell script
+    ```sh
     ./awslambdaproxy setup
     ```
 
 5. Run `awslambdaproxy run`. 
 
-    ```shell script
+    ```sh
     ./awslambdaproxy run -r us-west-2,us-west-1,us-east-1,us-east-2
     ```
     
@@ -73,7 +72,7 @@ The easiest way is to download a pre-built binary from the [GitHub Releases](htt
 ## Minimal IAM Policies
 * This assumes you have the AWS CLI setup with an admin user
 * Create a user with proper permissions needed to run the setup command. This user can be removed after running the setup command.
-```shell script
+```
 aws iam create-user --user-name awslambdaproxy-setup
 aws iam put-user-policy --user-name awslambdaproxy-setup --policy-name awslambdaproxy-setup --policy-document file://deployment/iam/setup.json
 aws iam create-access-key --user-name awslambdaproxy-setup
@@ -88,7 +87,7 @@ aws iam create-access-key --user-name awslambdaproxy-setup
 }
 ```
 * Create a user with proper permission needed to run the proxy.
-```shell script
+```
 aws iam create-user --user-name awslambdaproxy-run
 aws iam put-user-policy --user-name awslambdaproxy-run --policy-name awslambdaproxy-run --policy-document file://deployment/iam/run.json
 aws iam create-access-key --user-name awslambdaproxy-run
@@ -106,7 +105,7 @@ aws iam create-access-key --user-name awslambdaproxy-run
 ## Terraform
 
 1. Clone repository and go to Terraform component folder:
-```shell script
+```sh
 git clone git@github.com:dan-v/awslambdaproxy.git && cd awslambdaproxy/iac/terraform
 ```
 
@@ -115,12 +114,12 @@ git clone git@github.com:dan-v/awslambdaproxy.git && cd awslambdaproxy/iac/terra
 3. Create and fill variable defenitions file ([read more here](https://www.terraform.io/docs/configuration/variables.html#variable-definitions-tfvars-files)) if you don't want to use default variables values.
 
 4. Run those commands to init and apply configuration:
-```shell script
+```sh
 terraform init && terraform apply -auto-approve
 ```
 
 It will create all dependent resources and run awslambdaproxy inside Docker container
- 
+
 ## FAQ
 1. <b>Should I use awslambdaproxy?</b> That's up to you. Use at your own risk.
 2. <b>Why did you use AWS Lambda for this?</b> The primary reason for using AWS Lambda in this project is the vast pool of IP addresses available that automatically rotate.
@@ -140,12 +139,12 @@ It will create all dependent resources and run awslambdaproxy inside Docker cont
 
 2. Fetch the project with `git clone`:
 
-  ```shell script
+  ```sh
   git clone git@github.com:dan-v/awslambdaproxy.git && cd awslambdaproxy
   ```
 
 3. Run make to build awslambdaproxy. You'll find your `awslambdaproxy` binary in the `artifacts` folder.
 
-  ```shell script
+  ```sh
   make
   ```
