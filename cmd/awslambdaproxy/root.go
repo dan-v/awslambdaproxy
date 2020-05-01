@@ -1,4 +1,4 @@
-package cmd
+package awslambdaproxy
 
 import (
 	"fmt"
@@ -9,12 +9,16 @@ import (
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
+var (
+	version string
+	cfgFile string
+)
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "awslambdaproxy",
-	Short: "An AWS Lambda powered HTTP/SOCKS web proxy",
+	Use:     "awslambdaproxy",
+	Short:   "An AWS Lambda powered HTTP/SOCKS web proxy",
+	Version: version,
 	Long: `awslambdaproxy is an AWS Lambda powered HTTP/SOCKS web proxy.
 It provides a constantly rotating IP address for your network traffic
 from all regions where AWS Lambda is available. The goal is to obfuscate

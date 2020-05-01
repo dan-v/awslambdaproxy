@@ -9,8 +9,8 @@ import (
 )
 
 type lambdaProxyServer struct {
-	port string
-	ln gost.Listener
+	port   string
+	ln     gost.Listener
 	server *gost.Server
 }
 

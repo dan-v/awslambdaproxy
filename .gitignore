@@ -83,10 +83,8 @@ fabric.properties
 # .idea/misc.xml 
 # *.ipr
 
-/awslambdaproxy
-data/lambda.zip
-data/lambda/main
 bindata.go
-build/
 .DS_Store
 vendor/
+artifacts
+coverage.html
