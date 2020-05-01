@@ -7,6 +7,6 @@ jobs:
     steps:
       - checkout
       - run: go get -u github.com/go-bindata/go-bindata/...
-      - run: make release
+      - run: make
       - store_artifacts:
           path: artifacts

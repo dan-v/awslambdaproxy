@@ -22,7 +22,7 @@ PACKAGE := github.com/dan-v/$(TARGET)
 	docker-build \
 	docker-release \
 
-all: tools fmt lint vet test build release
+all: tools fmt build lint vet test release
 
 print-%:
 	@echo $* = $($*)
