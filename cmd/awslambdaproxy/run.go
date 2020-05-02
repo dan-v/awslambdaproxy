@@ -13,10 +13,10 @@ import (
 )
 
 var (
-	frequency                                    time.Duration
-	memory                                       int
-	debug, debugProxy                            bool
-	sshUser, sshPort, regions, listeners, bypass string
+	frequency                                                               time.Duration
+	memory                                                                  int
+	debug, debugProxy                                                       bool
+	lambdaName, lambdaIamRole, sshUser, sshPort, regions, listeners, bypass string
 )
 
 // runCmd represents the run command
@@ -50,12 +50,16 @@ var runCmd = &cobra.Command{
 		aFrequency := viper.GetDuration("frequency")
 		aListeners := strings.Split(viper.GetString("listeners"), ",")
 		aBypass := viper.GetString("bypass")
+		aLambdaName := viper.GetString("lambda-name")
+		aLambdaIamRoleName := viper.GetString("lambda-iam-role-name")
 
 		if _, err := server.GetSessionAWS(); err != nil {
 			log.Fatal("unable to find valid aws credentials")
 		}
 
 		s, err := server.New(server.Config{
+			LambdaName:               aLambdaName,
+			LambdaIamRoleName:        aLambdaIamRoleName,
 			LambdaRegions:            aRegions,
 			LambdaMemory:             aMemory,
 			LambdaExecutionFrequency: aFrequency,
@@ -84,6 +88,10 @@ func getCurrentUserName() string {
 func init() {
 	RootCmd.AddCommand(runCmd)
 
+	runCmd.Flags().StringVarP(&lambdaName, "lambda-name", "n", "awslambdaproxy",
+		fmt.Sprintf("name of lambda function"))
+	runCmd.Flags().StringVarP(&lambdaIamRole, "lambda-iam-role-name", "i", "awslambdaproxy-role",
+		fmt.Sprintf("name of lambda function"))
 	runCmd.Flags().StringVarP(&regions, "regions", "r", "us-west-2",
 		fmt.Sprintf("comma separted list of regions to run proxy (e.g. us-west-2,us-west-1,us-east-1). "+
 			"valid regions include %v", server.GetValidLambdaRegions()))
@@ -111,6 +119,8 @@ func init() {
 		"comma separated list of domains/ips to bypass lambda proxy (e.g. *.websocket.org,*.youtube.com). "+
 			"note that when using sock5 proxy mode you'll need to be remotely resolving dns for this to work.")
 
+	viper.BindPFlag("lambda-name", runCmd.Flags().Lookup("lambda-name"))
+	viper.BindPFlag("lambda-iam-role-name", runCmd.Flags().Lookup("lambda-iam-role-name"))
 	viper.BindPFlag("regions", runCmd.Flags().Lookup("regions"))
 	viper.BindPFlag("frequency", runCmd.Flags().Lookup("frequency"))
 	viper.BindPFlag("memory", runCmd.Flags().Lookup("memory"))
