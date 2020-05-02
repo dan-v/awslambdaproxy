@@ -34,6 +34,10 @@ const (
 
 // Config is used to define the configuration for Server
 type Config struct {
+	// LambdaName is a name of Lambda function
+	LambdaName string
+	// LambdaIamRoleName is a name of Lambda function IAM role
+	LambdaIamRoleName string
 	// LambdaRegions is all regions to execute Lambda functions in
 	LambdaRegions []string
 	// LambdaMemory is the size of memory to assign Lambda function
@@ -60,6 +64,8 @@ type Config struct {
 // Server is the long running server component of awslambdaproxy
 type Server struct {
 	publicIPClient           publicip.Client
+	lambdaName               string
+	lambdaIamRole            string
 	lambdaRegions            []string
 	lambdaMemory             int64
 	lambdaExecutionFrequency time.Duration
@@ -87,6 +93,8 @@ func New(config Config) (*Server, error) {
 	functionTimeout := int(config.LambdaExecutionFrequency.Seconds()) + int(LambdaExecutionTimeoutBuffer.Seconds())
 	s := &Server{
 		publicIPClient:           awspublicip.New(),
+		lambdaName:               config.LambdaName,
+		lambdaIamRole:            config.LambdaIamRoleName,
 		lambdaRegions:            config.LambdaRegions,
 		lambdaMemory:             int64(config.LambdaMemory),
 		lambdaExecutionFrequency: config.LambdaExecutionFrequency,
@@ -102,6 +110,8 @@ func New(config Config) (*Server, error) {
 
 	logger.WithFields(logrus.Fields{
 		"publicIPClient":           s.publicIPClient.ProviderURL(),
+		"lambdaName":               s.lambdaName,
+		"lambdaIamRole":            s.lambdaIamRole,
 		"lambdaRegions":            s.lambdaRegions,
 		"lambdaMemory":             s.lambdaMemory,
 		"lambdaExecutionFrequency": s.lambdaExecutionFrequency,
@@ -124,7 +134,7 @@ func (s *Server) Run() {
 	}
 
 	s.logger.Infof("setting up lambda infrastructure")
-	err = setupLambdaInfrastructure(s.lambdaRegions, s.lambdaMemory, s.lambdaTimeoutSeconds)
+	err = setupLambdaInfrastructure(s.lambdaName, s.lambdaIamRole, s.lambdaRegions, s.lambdaMemory, s.lambdaTimeoutSeconds)
 	if err != nil {
 		s.logger.WithError(err).Fatalf("failed to setup lambda infrastructure")
 	}
@@ -148,7 +158,7 @@ func (s *Server) Run() {
 	}
 
 	s.logger.Println("starting lambda execution manager")
-	_, err = newLambdaExecutionManager(publicIP, s.lambdaRegions, s.lambdaExecutionFrequency,
+	_, err = newLambdaExecutionManager(s.lambdaName, publicIP, s.lambdaRegions, s.lambdaExecutionFrequency,
 		s.reverseTunnelSSHUser, s.reverseTunnelSSHPort, privateKey, tunnelConnectionManager.tunnelRedeployNeeded)
 	if err != nil {
 		s.logger.WithError(err).Fatalf("failed to setup lambda execution manager")

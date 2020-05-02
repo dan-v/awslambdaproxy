@@ -13,6 +13,7 @@ import (
 )
 
 type lambdaExecutionManager struct {
+	name      string
 	regions   []string
 	frequency time.Duration
 	publicIP  string
@@ -64,7 +65,7 @@ func (l *lambdaExecutionManager) executeFunction(region int, setInvokeConfig boo
 		log.Printf("Setting invoke configuration maximumRetryAttempts=%v maximumEventAgeInSeconds=%v\n",
 			maximumRetryAttempts, maximumEventAgeInSeconds)
 		_, err = svc.PutFunctionEventInvokeConfig(&lambda.PutFunctionEventInvokeConfigInput{
-			FunctionName:             aws.String(lambdaFunctionName),
+			FunctionName:             aws.String(l.name),
 			MaximumEventAgeInSeconds: aws.Int64(maximumEventAgeInSeconds),
 			MaximumRetryAttempts:     aws.Int64(maximumRetryAttempts),
 		})
@@ -86,7 +87,7 @@ func (l *lambdaExecutionManager) executeFunction(region int, setInvokeConfig boo
 	}
 	payload, _ := json.Marshal(lambdaPayload)
 	params := &lambda.InvokeInput{
-		FunctionName:   aws.String(lambdaFunctionName),
+		FunctionName:   aws.String(l.name),
 		InvocationType: aws.String(lambda.InvocationTypeEvent),
 		Payload:        payload,
 	}
@@ -99,9 +100,10 @@ func (l *lambdaExecutionManager) executeFunction(region int, setInvokeConfig boo
 	return nil
 }
 
-func newLambdaExecutionManager(publicIP string, regions []string, frequency time.Duration, sshUser string, sshPort string,
+func newLambdaExecutionManager(name string, publicIP string, regions []string, frequency time.Duration, sshUser string, sshPort string,
 	privateKey []byte, onDemandExecution chan bool) (*lambdaExecutionManager, error) {
 	executionManager := &lambdaExecutionManager{
+		name:      name,
 		regions:   regions,
 		frequency: frequency,
 		publicIP:  publicIP,

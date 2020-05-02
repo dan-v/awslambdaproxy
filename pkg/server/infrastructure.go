@@ -15,23 +15,22 @@ import (
 )
 
 const (
-	lambdaFunctionName              = "awslambdaproxy"
-	lambdaFunctionHandler           = "main"
-	lambdaFunctionRuntime           = "go1.x"
-	lambdaFunctionIamRole           = "awslambdaproxy-role"
-	lambdaFunctionIamRolePolicyName = "awslambdaproxy-role-policy"
-	lambdaFunctionZipLocation       = "artifacts/lambda.zip"
+	lambdaFunctionHandler     = "main"
+	lambdaFunctionRuntime     = "go1.x"
+	lambdaFunctionZipLocation = "artifacts/lambda.zip"
 )
 
 type lambdaInfrastructure struct {
 	config           *aws.Config
+	name             string
+	iamRole          string
 	regions          []string
 	lambdaTimeout    int64
 	lambdaMemorySize int64
 }
 
 // SetupLambdaInfrastructure sets up IAM role needed to run awslambdaproxy
-func SetupLambdaInfrastructure() error {
+func SetupLambdaInfrastructure(lambdaIamRole string) error {
 	sess, err := GetSessionAWS()
 	if err != nil {
 		return err
@@ -39,7 +38,7 @@ func SetupLambdaInfrastructure() error {
 
 	svc := iam.New(sess, &aws.Config{})
 	_, err = svc.GetRole(&iam.GetRoleInput{
-		RoleName: aws.String(lambdaFunctionIamRole),
+		RoleName: aws.String(lambdaIamRole),
 	})
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {
@@ -53,7 +52,7 @@ func SetupLambdaInfrastructure() error {
 					    "Action": "sts:AssumeRole"
 					  }
 				    	}`),
-					RoleName: aws.String(lambdaFunctionIamRole),
+					RoleName: aws.String(lambdaIamRole),
 					Path:     aws.String("/"),
 				})
 				if err != nil {
@@ -74,8 +73,8 @@ func SetupLambdaInfrastructure() error {
 					    }
 					  ]
 					}`),
-					PolicyName: aws.String(lambdaFunctionIamRolePolicyName),
-					RoleName:   aws.String(lambdaFunctionIamRole),
+					PolicyName: aws.String(lambdaIamRole + "-policy"),
+					RoleName:   aws.String(lambdaIamRole),
 				})
 				if err != nil {
 					return err
@@ -102,10 +101,10 @@ func (infra *lambdaInfrastructure) setup() error {
 
 	svc := iam.New(sess, infra.config)
 	resp, err := svc.GetRole(&iam.GetRoleInput{
-		RoleName: aws.String(lambdaFunctionIamRole),
+		RoleName: aws.String(infra.iamRole),
 	})
 	if err != nil {
-		return errors.Wrap(err, "Could not find IAM role "+lambdaFunctionIamRole+". Probably need to run setup.")
+		return errors.Wrap(err, "Could not find IAM role "+infra.iamRole+". Probably need to run setup.")
 	}
 	roleArn := *resp.Role.Arn
 	zip, err := Asset(lambdaFunctionZipLocation)
@@ -114,7 +113,7 @@ func (infra *lambdaInfrastructure) setup() error {
 	}
 	for _, region := range infra.regions {
 		log.Println("Setting up Lambda function in region: " + region)
-		err = infra.createOrUpdateLambdaFunction(sess, region, roleArn, zip)
+		err = infra.createOrUpdateLambdaFunction(sess, infra.name, region, roleArn, zip)
 		if err != nil {
 			return errors.Wrap(err, "Could not create Lambda function in region "+region)
 		}
@@ -122,8 +121,10 @@ func (infra *lambdaInfrastructure) setup() error {
 	return nil
 }
 
-func setupLambdaInfrastructure(regions []string, memorySize int64, timeout int64) error {
+func setupLambdaInfrastructure(name string, iamRole string, regions []string, memorySize int64, timeout int64) error {
 	infra := lambdaInfrastructure{
+		name:             name,
+		iamRole:          iamRole,
 		regions:          regions,
 		config:           &aws.Config{},
 		lambdaTimeout:    timeout,
@@ -135,11 +136,11 @@ func setupLambdaInfrastructure(regions []string, memorySize int64, timeout int64
 	return nil
 }
 
-func (infra *lambdaInfrastructure) createOrUpdateLambdaFunction(sess *session.Session, region, roleArn string, payload []byte) error {
+func (infra *lambdaInfrastructure) createOrUpdateLambdaFunction(sess *session.Session, name, region, roleArn string, payload []byte) error {
 	config := infra.config.WithRegion(region)
 
 	svc := lambda.New(sess, config)
-	exists, err := lambdaExists(svc)
+	exists, err := lambdaExists(svc, name)
 	if err != nil {
 		return err
 	}
@@ -156,7 +157,7 @@ func (infra *lambdaInfrastructure) createOrUpdateLambdaFunction(sess *session.Se
 
 func (infra *lambdaInfrastructure) deleteLambdaFunction(svc *lambda.Lambda) error {
 	_, err := svc.DeleteFunction(&lambda.DeleteFunctionInput{
-		FunctionName: aws.String(lambdaFunctionName),
+		FunctionName: aws.String(infra.name),
 	})
 	if err != nil {
 		return err
@@ -169,7 +170,7 @@ func (infra *lambdaInfrastructure) createLambdaFunction(svc *lambda.Lambda, role
 		Code: &lambda.FunctionCode{
 			ZipFile: payload,
 		},
-		FunctionName: aws.String(lambdaFunctionName),
+		FunctionName: aws.String(infra.name),
 		Handler:      aws.String(lambdaFunctionHandler),
 		Role:         aws.String(roleArn),
 		Runtime:      aws.String(lambdaFunctionRuntime),
@@ -189,9 +190,9 @@ func (infra *lambdaInfrastructure) createLambdaFunction(svc *lambda.Lambda, role
 	return nil
 }
 
-func lambdaExists(svc *lambda.Lambda) (bool, error) {
+func lambdaExists(svc *lambda.Lambda, name string) (bool, error) {
 	_, err := svc.GetFunction(&lambda.GetFunctionInput{
-		FunctionName: aws.String(lambdaFunctionName),
+		FunctionName: aws.String(name),
 	})
 
 	if err != nil {
@@ -258,8 +259,8 @@ func (infra *lambdaInfrastructure) createIAMLambdaRolePolicy(sess *session.Sessi
 		    }
 		  ]
 		}`),
-		PolicyName: aws.String(lambdaFunctionIamRolePolicyName),
-		RoleName:   aws.String(roleName),
+		PolicyName: aws.String(infra.iamRole + "-policy"),
+		RoleName:   aws.String(infra.iamRole),
 	})
 	return err
 }
