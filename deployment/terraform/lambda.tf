@@ -239,7 +239,7 @@ resource "aws_lambda_function" "sa-east-1" {
 }
 
 resource "aws_lambda_function" "us-east-1" {
-  count    = contains(var.lambda_regions, "ap-northeast-1") ? 1 : 0
+  count    = contains(var.lambda_regions, "us-east-1") ? 1 : 0
   provider = aws.us-east-1
 
   filename      = "${path.module}/dummy.zip"

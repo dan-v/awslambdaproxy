@@ -1,3 +1,7 @@
+terraform {
+  experiments = [variable_validation]
+}
+
 variable "aws_access_key" {
   type        = string
   description = "AWS access key associated with an IAM user or role"
@@ -17,6 +21,35 @@ variable "name" {
   type        = string
   description = "Name that will be used in resources names and tags"
   default     = "terraform-aws-lambda-proxy-single-instance"
+}
+
+variable "create_vpc" {
+  type        = bool
+  description = "Create personal VPC."
+  default     = false
+}
+
+variable "vpc_cidr_block" {
+  type        = string
+  description = "CIDR block for the VPC."
+  default     = "10.0.0.0/16"
+}
+
+variable "flow_log_enable" {
+  type        = bool
+  description = "Enable Flow Log for VPC."
+  default     = true
+}
+
+variable "flow_log_destination" {
+  type        = string
+  description = "Provides a VPC/Subnet/ENI Flow Log to capture IP traffic for a specific network interface, subnet, or VPC."
+  default     = "cloudwatch"
+
+  validation {
+    condition     = contains(["cloudwatch", "s3"], var.flow_log_destination)
+    error_message = "Logs can be sent only to a CloudWatch Log Group or a S3 Bucket."
+  }
 }
 
 variable "app_version" {
@@ -40,12 +73,6 @@ variable "instance_type" {
 variable "elastic_ip" {
   type        = bool
   description = "Create EIP for instance"
-  default     = true
-}
-
-variable "create_vpc" {
-  type        = bool
-  description = "Enable VPC creation"
   default     = true
 }
 

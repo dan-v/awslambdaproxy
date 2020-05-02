@@ -18,56 +18,58 @@ At a high level, awslambdaproxy proxies TCP/UDP traffic through AWS Lambda regio
 ![](/assets/images/how-it-works.png?raw=true)
 
 ## Installation
-- [Manual](#manual)
 - [Terraform](#terraform)
+- [Manual](#manual)
 
-The easiest way is to download a pre-built binary from the [GitHub Releases](https://github.com/dan-v/awslambdaproxy/releases) page.
+## Terraform
+
+1. Clone repository and go to Terraform component folder:
+```sh
+git clone git@github.com:dan-v/awslambdaproxy.git && cd awslambdaproxy/deployment/terraform
+```
+
+2. Configure your Terrafom backend. Read more about Terraform backend [here](https://www.terraform.io/docs/backends/index.html).
+
+3. Create and fill variable defenitions file ([read more here](https://www.terraform.io/docs/configuration/variables.html#variable-definitions-tfvars-files)) if you don't want to use default variables values.
+
+4. Run those commands to init and apply configuration:
+```sh
+terraform init && terraform apply -auto-approve
+```
+
+It will create all dependent resources and run awslambdaproxy inside Docker container. EC2 instance SSH key can be found in AWS Secret Manager in your [AWS Management Console](https://console.aws.amazon.com/).
+
+NOTE: Some AWS regions have a big list of IP CIDR blocks and they can overhead default limits of security group ([read more](https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html#vpc-limits-security-groups)). Need to make limit increase request through the AWS Support Center by choosing Create Case and then choosing Service Limit Increase to prevent deployment issues.
 
 ## Manual
 
-1. Copy `awslambdaproxy` binary to a <b>publicly accessible</b> linux host (e.g. EC2 instance, VPS instance, etc). You will need to <b>open the following ports</b> on this host:
+1. Download a pre-built binary from the [GitHub Releases](https://github.com/dan-v/awslambdaproxy/releases) page.
+
+2. Copy `awslambdaproxy` binary to a <b>publicly accessible</b> linux host (e.g. EC2 instance, VPS instance, etc). You will need to <b>open the following ports</b> on this host:
     * <b>Port 22</b> - functions executing in AWS Lambda will open SSH connections back to the host running `awslambdaproxy`, so this port needs to be open to the world. The SSH key used here is dynamically generated at startup and added to the running users authorized_keys file.
     * <b>Port 8080</b> - the default configuration will start a HTTP/SOCKS proxy listener on this port with default user/password authentication. If you don't want to publicly expose the proxy server, one option is to setup your own VPN server (e.g. [dosxvpn](https://github.com/dan-v/dosxvpn) or [algo](https://github.com/trailofbits/algo)), connect to it, and just run awslambdaproxy with the proxy listener only on localhost (-l localhost:8080).
 
-2. Optional, but I'd highly recommend taking a look at the Minimal IAM Policies section below. This will allow you to setup minimal permissions required to setup and run the project. Otherwise, if you don't care about security you can always use an access key with full administrator privileges. 
+3. Optional, but I'd highly recommend taking a look at the Minimal IAM Policies section below. This will allow you to setup minimal permissions required to setup and run the project. Otherwise, if you don't care about security you can always use an access key with full administrator privileges. 
 
-3. `awslambdaproxy` will need access to credentials for AWS in some form. This can be either through exporting environment variables (as shown below), shared credential file, or an IAM role if assigned to the instance you are running it on. See [this](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html#specifying-credentials) for more details.
+4. `awslambdaproxy` will need access to credentials for AWS in some form. This can be either through exporting environment variables (as shown below), shared credential file, or an IAM role if assigned to the instance you are running it on. See [this](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html#specifying-credentials) for more details.
 
     ```sh
     export AWS_ACCESS_KEY_ID=XXXXXXXXXX
     export AWS_SECRET_ACCESS_KEY=YYYYYYYYYYYYYYYYYYYYYY
     ```
-4. Run `awslambdaproxy setup`. 
+5. Run `awslambdaproxy setup`. 
 
     ```sh
     ./awslambdaproxy setup
     ```
 
-5. Run `awslambdaproxy run`. 
+6. Run `awslambdaproxy run`. 
 
     ```sh
     ./awslambdaproxy run -r us-west-2,us-west-1,us-east-1,us-east-2
     ```
     
-6. Configure your web browser (or OS) to use the HTTP/SOCKS5 proxy on the publicly accessible host running `awslambdaproxy` on port 8080.
-
-## Examples
-```
-# execute proxy in four different regions with rotation happening every 60 seconds
-./awslambdaproxy run -r us-west-2,us-west-1,us-east-1,us-east-2 -f 60s
-
-# choose a different port and username/password for proxy and add another listener on localhost with no auth
-./awslambdaproxy run -l "admin:admin@:8888,localhost:9090"
-
-# bypass certain domains from using lambda proxy
-./awslambdaproxy run -b "*.websocket.org,*.youtube.com"
-
-# specify a dns server for the proxy server to use for dns lookups
-./awslambdaproxy run -l "admin:awslambdaproxy@:8080?dns=1.1.1.1"
-
-# increase function memory size for better network performance
-./awslambdaproxy run -m 512
-```
+7. Configure your web browser (or OS) to use the HTTP/SOCKS5 proxy on the publicly accessible host running `awslambdaproxy` on port 8080.
 
 ## Minimal IAM Policies
 * This assumes you have the AWS CLI setup with an admin user
@@ -102,25 +104,23 @@ aws iam create-access-key --user-name awslambdaproxy-run
 }
 ```
 
-## Terraform
-
-1. Clone repository and go to Terraform component folder:
-```sh
-git clone git@github.com:dan-v/awslambdaproxy.git && cd awslambdaproxy/deployment/terraform
+## Examples
 ```
+# execute proxy in four different regions with rotation happening every 60 seconds
+./awslambdaproxy run -r us-west-2,us-west-1,us-east-1,us-east-2 -f 60s
 
-2. Configure your Terrafom backend. Read more about Terraform backend [here](https://www.terraform.io/docs/backends/index.html).
+# choose a different port and username/password for proxy and add another listener on localhost with no auth
+./awslambdaproxy run -l "admin:admin@:8888,localhost:9090"
 
-3. Create and fill variable defenitions file ([read more here](https://www.terraform.io/docs/configuration/variables.html#variable-definitions-tfvars-files)) if you don't want to use default variables values.
+# bypass certain domains from using lambda proxy
+./awslambdaproxy run -b "*.websocket.org,*.youtube.com"
 
-4. Run those commands to init and apply configuration:
-```sh
-terraform init && terraform apply -auto-approve
+# specify a dns server for the proxy server to use for dns lookups
+./awslambdaproxy run -l "admin:awslambdaproxy@:8080?dns=1.1.1.1"
+
+# increase function memory size for better network performance
+./awslambdaproxy run -m 512
 ```
-
-It will create all dependent resources and run awslambdaproxy inside Docker container. EC2 instance SSH key can be found in AWS Secret Manager in your [AWS Management Console](https://console.aws.amazon.com/).
-
-NOTE: Some AWS regions have a big list of IP CIDR blocks and they can overhead default limits of security group ([read more](https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html#vpc-limits-security-groups)). Need to make limit increase request through the AWS Support Center by choosing Create Case and then choosing Service Limit Increase to prevent deployment issues.
 
 ## FAQ
 1. <b>Should I use awslambdaproxy?</b> That's up to you. Use at your own risk.

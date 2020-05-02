@@ -34,11 +34,15 @@ locals {
   stop_awslambdaproxy = "docker rm -f ${var.name}"
 
   default_subnet = element(tolist(data.aws_subnet_ids.default.ids), 0)
-  custom_subnet  = module.vpc_single_public.subnet[0]["id"]
+  custom_subnet  = try(aws_subnet.public[0].id, "")
 }
 
 resource "random_id" "this" {
   byte_length = 1
+
+  keepers = {
+    cidr_block = var.vpc_cidr_block
+  }
 }
 
 resource "random_string" "this" {
@@ -49,15 +53,6 @@ resource "random_string" "this" {
 resource "random_password" "this" {
   length  = 16
   special = false
-}
-
-module "vpc_single_public" {
-  source  = "yurymkomarov/vpc-single-public/aws"
-  version = "1.0.1"
-
-  create_vpc = var.create_vpc
-  name       = "${var.name}-vpc"
-  cidr_block = "10.0.0.0/16"
 }
 
 resource "aws_instance" "this" {
@@ -163,7 +158,7 @@ resource "aws_security_group" "this" {
   for_each = toset(var.lambda_regions)
 
   name   = "${var.name}-${each.value}-${random_id.this.hex}"
-  vpc_id = var.create_vpc ? module.vpc_single_public.vpc["id"] : data.aws_vpc.default.id
+  vpc_id = var.create_vpc ? try(aws_vpc.this[0].id, "") : data.aws_vpc.default.id
 
   dynamic "ingress" {
     for_each = var.ssh_cidr_blocks
