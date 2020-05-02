@@ -1,6 +1,4 @@
 locals {
-  app_name = "awslambdaproxy"
-
   docker_image = "vdan/awslambdaproxy"
 
   proxy_credentials = var.proxy_credentials == null ? "${random_string.this.result}:${random_password.this.result}" : var.proxy_credentials
@@ -14,26 +12,33 @@ locals {
 
   start_awslambdaproxy = <<-EOF
     docker run --detach --restart=always \
-      --name ${local.app_name} \
+      --name ${var.name} \
       --env AWS_ACCESS_KEY_ID=${aws_iam_access_key.this.id} \
       --env AWS_SECRET_ACCESS_KEY=${aws_iam_access_key.this.secret} \
+      --env LAMBDA_NAME="${var.name}-${random_id.this.hex}" \
+      --env LAMBDA_IAM_ROLE_NAME="${aws_iam_role.lambda.name}" \
       --env REGIONS=${join(",", var.lambda_regions)} \
       --env FREQUENCY=${var.lambda_frequency} \
       --env SSH_USER=${var.tunnel_ssh_user} \
       --env SSH_PORT=${var.tunnel_ssh_port} \
       --env MEMORY=${var.lambda_memory} \
-      --env LISTENERS=${local.proxy_credentials}@:${var.proxy_port} \
+      --env LISTENERS=${local.proxy_credentials}@:${var.proxy_port}?dns=${var.proxy_dns} \
+      --env DEBUG=${var.app_debug} \
       --env DEBUG_PROXY=${var.proxy_debug} \
+      --env BYPASS=${join(",", var.proxy_bypass_domains)} \
       --publish ${var.tunnel_ssh_port}:${var.tunnel_ssh_port} \
       --publish ${var.proxy_port}:${var.proxy_port} \
       ${local.docker_image}:${var.app_version}
   EOF
 
-  stop_awslambdaproxy = "docker rm -f ${local.app_name}"
+  stop_awslambdaproxy = "docker rm -f ${var.name}"
+
+  default_subnet = element(tolist(data.aws_subnet_ids.default.ids), 0)
+  custom_subnet  = module.vpc_single_public.subnet[0]["id"]
 }
 
 resource "random_id" "this" {
-  byte_length = 2
+  byte_length = 1
 }
 
 resource "random_string" "this" {
@@ -46,13 +51,22 @@ resource "random_password" "this" {
   special = false
 }
 
+module "vpc_single_public" {
+  source  = "yurymkomarov/vpc-single-public/aws"
+  version = "1.0.1"
+
+  create_vpc = var.create_vpc
+  name       = "${var.name}-vpc"
+  cidr_block = "10.0.0.0/16"
+}
+
 resource "aws_instance" "this" {
-  ami                  = data.aws_ami.this.id
-  instance_type        = var.instance_type
-  availability_zone    = data.aws_availability_zones.this.names[0]
-  iam_instance_profile = aws_iam_instance_profile.this.name
-  security_groups      = [data.aws_security_group.default.name, aws_security_group.this.name]
-  key_name             = aws_key_pair.ec2.key_name
+  ami                    = data.aws_ami.this.id
+  instance_type          = var.instance_type
+  iam_instance_profile   = aws_iam_instance_profile.this.name
+  vpc_security_group_ids = [for i in aws_security_group.this : i.id]
+  subnet_id              = var.create_vpc ? local.custom_subnet : local.default_subnet
+  key_name               = aws_key_pair.ec2.key_name
 
   provisioner "remote-exec" {
     inline = local.install_docker
@@ -65,22 +79,20 @@ resource "aws_instance" "this" {
   }
 
   tags = {
-    Name      = "${var.name}-${random_id.this.hex}"
+    Name      = var.name
     Workspace = terraform.workspace
   }
 
   lifecycle {
     create_before_destroy = true
   }
-
-  depends_on = [aws_lambda_function.this]
 }
 
 resource "aws_eip" "this" {
   vpc = true
 
   tags = {
-    Name      = "${var.name}-${random_id.this.hex}"
+    Name      = var.name
     Workspace = terraform.workspace
   }
 }
@@ -134,7 +146,7 @@ resource "aws_secretsmanager_secret" "this" {
   name = "${var.name}-${random_id.this.hex}"
 
   tags = {
-    Name      = "${var.name}-${random_id.this.hex}"
+    Name      = var.name
     Workspace = terraform.workspace
   }
 }
@@ -148,7 +160,10 @@ resource "aws_secretsmanager_secret_version" "this" {
 }
 
 resource "aws_security_group" "this" {
-  name = "${var.name}-${random_id.this.hex}"
+  for_each = toset(var.lambda_regions)
+
+  name   = "${var.name}-${each.value}-${random_id.this.hex}"
+  vpc_id = var.create_vpc ? module.vpc_single_public.vpc["id"] : data.aws_vpc.default.id
 
   dynamic "ingress" {
     for_each = var.ssh_cidr_blocks
@@ -171,7 +186,7 @@ resource "aws_security_group" "this" {
     from_port   = var.tunnel_ssh_port
     protocol    = "tcp"
     to_port     = var.tunnel_ssh_port
-    cidr_blocks = data.aws_ip_ranges.lambda.cidr_blocks
+    cidr_blocks = data.aws_ip_ranges.lambda[each.value].cidr_blocks
   }
 
   ingress {
@@ -189,7 +204,7 @@ resource "aws_security_group" "this" {
   }
 
   tags = {
-    Name      = "${var.name}-${random_id.this.hex}"
+    Name      = var.name
     Workspace = terraform.workspace
   }
 }
@@ -200,11 +215,11 @@ resource "aws_iam_instance_profile" "this" {
 }
 
 resource "aws_iam_role" "profile" {
-  name               = "${var.name}-role-${random_id.this.hex}"
+  name               = "${var.name}-profile-${random_id.this.hex}"
   assume_role_policy = data.aws_iam_policy_document.profile_sts.json
 
   tags = {
-    Name      = "${var.name}-${random_id.this.hex}"
+    Name      = var.name
     Workspace = terraform.workspace
   }
 }
@@ -215,11 +230,11 @@ resource "aws_iam_role_policy" "profile" {
 }
 
 resource "aws_iam_role" "lambda" {
-  name               = "awslambdaproxy-role"
+  name               = "${var.name}-lambda-${random_id.this.hex}"
   assume_role_policy = data.aws_iam_policy_document.lambda_sts.json
 
   tags = {
-    Name      = "${var.name}-${random_id.this.hex}"
+    Name      = var.name
     Workspace = terraform.workspace
   }
 }
@@ -233,7 +248,7 @@ resource "aws_iam_user" "this" {
   name = "${var.name}-user-${random_id.this.hex}"
 
   tags = {
-    Name      = "${var.name}-${random_id.this.hex}"
+    Name      = var.name
     Workspace = terraform.workspace
   }
 }
@@ -246,23 +261,4 @@ resource "aws_iam_user_policy" "this" {
 
 resource "aws_iam_access_key" "this" {
   user = aws_iam_user.this.name
-}
-
-resource "aws_lambda_function" "this" {
-  for_each = toset(var.lambda_regions)
-
-  filename      = "${path.module}/function.zip"
-  function_name = "awslambdaproxy"
-  handler       = "main"
-  role          = aws_iam_role.lambda.arn
-  runtime       = "go1.x"
-
-  tags = {
-    Name      = "${var.name}-${random_id.this.hex}"
-    Workspace = terraform.workspace
-  }
-
-  lifecycle {
-    ignore_changes = [timeout]
-  }
 }

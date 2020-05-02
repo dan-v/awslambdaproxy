@@ -106,7 +106,7 @@ aws iam create-access-key --user-name awslambdaproxy-run
 
 1. Clone repository and go to Terraform component folder:
 ```sh
-git clone git@github.com:dan-v/awslambdaproxy.git && cd awslambdaproxy/iac/terraform
+git clone git@github.com:dan-v/awslambdaproxy.git && cd awslambdaproxy/deployment/terraform
 ```
 
 2. Configure your Terrafom backend. Read more about Terraform backend [here](https://www.terraform.io/docs/backends/index.html).
@@ -118,7 +118,9 @@ git clone git@github.com:dan-v/awslambdaproxy.git && cd awslambdaproxy/iac/terra
 terraform init && terraform apply -auto-approve
 ```
 
-It will create all dependent resources and run awslambdaproxy inside Docker container
+It will create all dependent resources and run awslambdaproxy inside Docker container. EC2 instance SSH key can be found in AWS Secret Manager in your [AWS Management Console](https://console.aws.amazon.com/).
+
+NOTE: Some AWS regions have a big list of IP CIDR blocks and they can overhead default limits of security group ([read more](https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html#vpc-limits-security-groups)). Need to make limit increase request through the AWS Support Center by choosing Create Case and then choosing Service Limit Increase to prevent deployment issues.
 
 ## FAQ
 1. <b>Should I use awslambdaproxy?</b> That's up to you. Use at your own risk.

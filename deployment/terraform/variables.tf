@@ -1,10 +1,21 @@
-terraform {
-  experiments = [variable_validation]
+variable "aws_access_key" {
+  type        = string
+  description = "AWS access key associated with an IAM user or role"
+}
+
+variable "aws_secret_key" {
+  type        = string
+  description = "The secret key associated with the access key. This is essentially the 'password' for the access key."
+}
+
+variable "aws_region" {
+  type        = string
+  description = "AWS Region to send the request to"
 }
 
 variable "name" {
   type        = string
-  description = "Name that will be used in resources names and tags."
+  description = "Name that will be used in resources names and tags"
   default     = "terraform-aws-lambda-proxy-single-instance"
 }
 
@@ -14,26 +25,33 @@ variable "app_version" {
   default     = "latest"
 }
 
+variable "app_debug" {
+  type        = bool
+  description = "Enable general debug logging"
+  default     = false
+}
+
 variable "instance_type" {
   type        = string
-  description = "The instance type of the EC2 instance."
+  description = "The instance type of the EC2 instance"
   default     = "t3.small"
-
-  validation {
-    condition     = contains(["t3.micro", "t3.small", "t3.medium", "t3.large", "t3.xlarge", "t3.2xlarge"], var.instance_type)
-    error_message = "Must be a valid Amazon EC2 instance type."
-  }
 }
 
 variable "elastic_ip" {
   type        = bool
-  description = "Create EIP for instance."
+  description = "Create EIP for instance"
+  default     = true
+}
+
+variable "create_vpc" {
+  type        = bool
+  description = "Enable VPC creation"
   default     = true
 }
 
 variable "lambda_regions" {
   type        = list(string)
-  description = "The list of AWS regions names where proxy lambda will be deployed."
+  description = "The list of AWS regions names where proxy lambda will be deployed"
   default     = ["ap-northeast-1", "ap-northeast-2", "ap-south-1", "ap-southeast-1", "ap-southeast-2", "ca-central-1", "eu-central-1", "eu-north-1", "eu-west-1", "eu-west-2", "eu-west-3", "sa-east-1", "us-east-1", "us-east-2", "us-west-1", "us-west-2"]
 }
 
@@ -45,13 +63,13 @@ variable "lambda_frequency" {
 
 variable "lambda_memory" {
   type        = number
-  description = "Memory size in MB for Lambda function. Higher memory may allow for faster network throughput."
+  description = "Memory size in MB for Lambda function. Higher memory may allow for faster network throughput"
   default     = 128
 }
 
 variable "proxy_debug" {
   type        = bool
-  description = "Enable debug logging for proxy."
+  description = "Enable debug logging for proxy"
   default     = false
 }
 
@@ -63,8 +81,20 @@ variable "proxy_credentials" {
 
 variable "proxy_port" {
   type        = number
-  description = "Proxy application port."
+  description = "Proxy server port"
   default     = 8080
+}
+
+variable "proxy_dns" {
+  type        = string
+  description = "Specify a DNS server for the proxy server to use for DNS lookups"
+  default     = "1.1.1.1"
+}
+
+variable "proxy_bypass_domains" {
+  type        = list(string)
+  description = "Bypass certain domains from using lambda proxy"
+  default     = []
 }
 
 variable "proxy_cidr_blocks" {
@@ -75,18 +105,18 @@ variable "proxy_cidr_blocks" {
 
 variable "tunnel_ssh_user" {
   type        = string
-  description = "SSH user for tunnel connections from Lambda."
+  description = "SSH user for tunnel connections from Lambda"
   default     = ""
 }
 
 variable "tunnel_ssh_port" {
   type        = number
-  description = "SSH port for tunnel connections from Lambda."
+  description = "SSH port for tunnel connections from Lambda"
   default     = 2222
 }
 
 variable "ssh_cidr_blocks" {
   type        = list(string)
-  description = "List of CIDR blocks for SSH access."
+  description = "List of CIDR blocks for SSH access"
   default     = []
 }

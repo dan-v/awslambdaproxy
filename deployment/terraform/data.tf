@@ -63,21 +63,23 @@ data "aws_iam_policy_document" "user" {
   statement {
     effect    = "Allow"
     actions   = ["lambda:*"]
-    resources = ["arn:aws:lambda:*:*:function:awslambdaproxy"]
+    resources = ["arn:aws:lambda:*:*:function:${var.name}-*"]
   }
 
   statement {
     effect    = "Allow"
     actions   = ["iam:GetRole", "iam:PassRole"]
-    resources = ["arn:aws:iam::*:role/awslambdaproxy-role"]
+    resources = ["arn:aws:iam::*:role/${var.name}-*"]
   }
-}
-
-data "aws_ip_ranges" "lambda" {
-  regions  = var.lambda_regions
-  services = ["ec2"]
 }
 
 data "http" "current_ip" {
   url = "http://ipv4.icanhazip.com"
+}
+
+data "aws_ip_ranges" "lambda" {
+  for_each = toset(var.lambda_regions)
+
+  regions  = [each.value]
+  services = ["ec2"]
 }
