@@ -71,7 +71,7 @@ NOTE: Some AWS regions have a big list of IP CIDR blocks and they can overhead d
     
 7. Configure your web browser (or OS) to use the HTTP/SOCKS5 proxy on the publicly accessible host running `awslambdaproxy` on port 8080.
 
-## Minimal IAM Policies
+### Minimal IAM Policies
 * This assumes you have the AWS CLI setup with an admin user
 * Create a user with proper permissions needed to run the setup command. This user can be removed after running the setup command.
 ```
@@ -130,6 +130,10 @@ aws iam create-access-key --user-name awslambdaproxy-run
 5. <b>How often will my external IP address change?</b> I'm not positive as that's specific to the internals of AWS Lambda, and that can change at any time. However, I'll give an example, with 4 regions specified rotating every 5 minutes it resulted in around 15 unique IPs per hour.
 6. <b>How much does this cost?</b> awslambdaproxy should be able to run mostly on the [AWS free tier](https://aws.amazon.com/free/) minus bandwidth costs. It can run on a t2.micro instance and the default 128MB Lambda function that is constantly running should also fall in the free tier usage. The bandwidth is what will cost you money; you will pay for bandwidth usage for both EC2 and Lambda.
 7. <b>Why does my connection drop periodically?</b> AWS Lambda functions can currently only execute for a maximum of 15 minutes. In order to maintain an ongoing proxy a new function is executed and all new traffic is cut over to it. Any ongoing connections to the previous Lambda function will hard stop after a timeout period. You generally won't see any issues for normal web browsing as connections are very short lived, but for any long lived connections you will see issues. Consider using the `--bypass` flag to specify known domains that you know use persistent connections to avoid having your connection constantly dropping for these.
+
+# Contributors
+* [yurymkomarov](https://github.com/yurymkomarov) - streamlined the entire deployment process with Terraform.
+* [unixfox](https://github.com/unixfox) - contributed the Docker image for awslambdaproxy.
 
 # Powered by
 * [gost](https://github.com/ginuerzh/gost) - A simple security tunnel written in Golang.
