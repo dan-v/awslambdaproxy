@@ -23,23 +23,23 @@ At a high level, awslambdaproxy proxies TCP/UDP traffic through AWS Lambda regio
 
 ## Terraform
 
-1. Clone repository and go to Terraform component folder:
+1. Clone repository and go to the `deployment/terraform` directory:
 ```sh
 git clone git@github.com:dan-v/awslambdaproxy.git && cd awslambdaproxy/deployment/terraform
 ```
 
-2. Configure your Terrafom backend. Read more about Terraform backend [here](https://www.terraform.io/docs/backends/index.html).
+2. Install [Terraform](https://www.terraform.io/) and configure your Terraform backend. Read more about Terraform backends [here](https://www.terraform.io/docs/backends/index.html).
 
-3. Create and fill variable defenitions file ([read more here](https://www.terraform.io/docs/configuration/variables.html#variable-definitions-tfvars-files)) if you don't want to use default variables values.
+3. Create and fill in a variable definitions file ([read more here](https://www.terraform.io/docs/configuration/variables.html#variable-definitions-tfvars-files)) if you don't want to use default variables values defined in `variables.tf`.
 
-4. Run those commands to init and apply configuration:
+4. Run these commands to init and apply configuration:
 ```sh
 terraform init && terraform apply -auto-approve
 ```
 
-It will create all dependent resources and run awslambdaproxy inside Docker container. EC2 instance SSH key can be found in AWS Secret Manager in your [AWS Management Console](https://console.aws.amazon.com/).
+It will create all dependent resources and run awslambdaproxy inside a Docker container. EC2 instance SSH key can be found in AWS Secret Manager in your [AWS Management Console](https://console.aws.amazon.com/).
 
-NOTE: Some AWS regions have a big list of IP CIDR blocks and they can overhead default limits of security group ([read more](https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html#vpc-limits-security-groups)). Need to make limit increase request through the AWS Support Center by choosing Create Case and then choosing Service Limit Increase to prevent deployment issues.
+NOTE: Some AWS regions have a big list of IP CIDR blocks and they can exceed the default limits of security groups ([read more](https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html#vpc-limits-security-groups)). In that case, you'll need to make a limit increase request through the `AWS Support Center` by choosing `Create Case` and then choosing `Service Limit Increase` to prevent deployment issues.
 
 ## Manual
 
