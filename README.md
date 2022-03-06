@@ -1,3 +1,6 @@
+# NOTICE: This project is no longer being maintained
+
+## Overview
 <b>awslambdaproxy</b> is an [AWS Lambda](https://aws.amazon.com/lambda/) powered HTTP/SOCKS web proxy. It provides a constantly rotating IP address for your network traffic from all regions where AWS Lambda is available. The goal is to obfuscate your traffic and make it harder to track you as a user.
 
 ![](/assets/images/overview.gif?raw=true)
